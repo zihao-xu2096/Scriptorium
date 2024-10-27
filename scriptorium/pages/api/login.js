@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma/prisma';
+import { generateToken } from '../../utils/auth';
 
 const bcrypt = require('bcrypt');
 
@@ -31,10 +32,11 @@ async function handler(req, res) {
             })
         }
 
-        const token = generateToken(user);
+        const token = generateToken(user); // TODO: Implement JWT refresh tokens
 
         return res.status(200).json({
             message: 'Verified',
+            email: user.email,
             token: token
         })
     }
@@ -42,3 +44,5 @@ async function handler(req, res) {
         res.status(405).json({ message: 'Method Not Allowed'});
     }
 }
+
+export default handler;
