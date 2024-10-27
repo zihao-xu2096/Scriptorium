@@ -5,7 +5,6 @@ const JWT_EXPIRES_IN = '1h'
 export function generateToken(user) {
     return jwt.sign(user, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
-
     })
 }
 
