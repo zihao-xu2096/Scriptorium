@@ -1,27 +1,14 @@
-import { prisma } from '../../prisma/prisma'
-import { verifyToken } from '../../utils/auth'
+import { verifyToken } from '../../utils/auth';
 
 async function handler(req, res) {
     if (req.method === 'GET') {
-        const { email, token } = req.body
+        const user = verifyToken(req.headers.authorization)
 
-        if (!email || !token) {
-            return res.status(400).json({
-                message: 'Please provide an email or token'
-            })
-        }
-
-        if (!verifyToken(token)) {
+        if (!user) {
             return res.status(401).json({
                 message: 'User Unauthorized'
             })
         } // TODO: Try to generate new access token???
-        
-        const user = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
 
         return res.status(200).json({
             firstName: user.firstName,
@@ -30,6 +17,9 @@ async function handler(req, res) {
             phoneNum: user.phoneNum,
             avatarUrl: user.avatarUrl
         })
+    }
+    else {
+        res.status(405).json({ message: 'Method Not Allowed' });
     }
 }
 
