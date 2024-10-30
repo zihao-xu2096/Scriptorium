@@ -1,11 +1,12 @@
-import { verifyToken } from '../../utils/auth';
+import { prisma } from '../../prisma/prisma';
+import { verifyAccessToken } from '../../utils/auth';
 
 
 async function handler(req, res) {
     if (req.method === 'PUT') {
-        const user = verifyToken(req.headers.authorization)
+        const decoded = verifyAccessToken(req.headers.authorization)
 
-        if (!user) {
+        if (!decoded) { // Return 401 if token is invalid and let frontend handle calling refresh token 
             return res.status(401).json({
                 message: 'User Unauthorized'
             })
@@ -21,9 +22,9 @@ async function handler(req, res) {
 
         try {
 
-            const updatedUser = await primsa.user.update({
+            const updatedUser = await prisma.user.update({
                 where: {
-                    id: user.id
+                    id: decoded.id
                 },
                 data: updateData
             })
@@ -34,6 +35,7 @@ async function handler(req, res) {
             })
 
         } catch (error) {
+            console.error(error)
             return res.status(500).json({ message: 'Internal Server Error' });
         }
 
@@ -42,3 +44,5 @@ async function handler(req, res) {
         res.status(405).json({ message: 'Method Not Allowed' });
     }
 }
+
+export default handler
