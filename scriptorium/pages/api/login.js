@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma/prisma';
-import { generateToken } from '../../utils/auth';
+import { generateAccessToken, generateRefreshToken } from '../../utils/auth';
 
 const bcrypt = require('bcrypt');
 
@@ -32,12 +32,13 @@ async function handler(req, res) {
             })
         }
 
-        const token = generateToken(user); // TODO: Implement JWT refresh tokens
-
+        const accessToken = generateAccessToken(user); // TODO: Create two tokens: access token and refresh token
+        const refreshToken = generateRefreshToken(user);
         return res.status(200).json({
             message: 'Verified',
             email: user.email,
-            token: token
+            accessToken: accessToken,
+            refreshToken: refreshToken
         })
     }
     else {
