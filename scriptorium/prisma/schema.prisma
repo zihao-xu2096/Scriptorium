@@ -25,4 +25,50 @@ model User {
   phoneNum  String   @unique
   //templates Template[] // One-to-many relation
   //Posts Post[] // One-to-many relation
+  comments  Comment[]
 }
+
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  createdBy   Int
+  title       String    
+  content     String
+  description String?
+  isHidden    Boolean
+  tags        Tag[]
+  //templates   Template[]
+  comments    Comment[]
+  reports     Report[]
+  upvotes     Int
+  downvotes   Int
+}
+
+model Tag {
+  label       String    @id
+  posts       Post[]
+}
+
+model Comment {
+  id          Int       @id @default(autoincrement())
+  content     String
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  postId      Int
+  post        Post      @relation(fields: [postId], references: [id])
+  parentId    Int?
+  parent      Comment?  @relation("CommentReply", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentReply")
+  reports     Report[]
+}
+
+model Report {
+  id          Int       @id @default(autoincrement())
+  explanation String
+  postId      Int?
+  post        Post?     @relation(fields: [postId], references: [id])
+  commentId   Int?
+  comment     Comment?  @relation(fields: [commentId], references: [id])
+}
+
