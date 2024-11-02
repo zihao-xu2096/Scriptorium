@@ -1,51 +1,85 @@
 // pages/api/compile.js
-import axios from 'axios';
+import { exec } from 'child_process';
+import { unlink, writeFile } from 'fs/promises';
+import os from 'os';
 
-const JUDGE0_API_URL = 'https://judge0-ce.p.rapidapi.com/submissions';
-const JUDGE0_API_KEY = 'f0617a1334msh958d68a6a169efdp1ae03cjsnf72faaf95289'; // Replace with your RapidAPI key
-
-const languageMap = {
-    'c': 50,
-    'cpp': 54,
-    'java': 62,
-    'python': 71,
-    'javascript': 63
+const languages = {
+    'c': {
+        fileType: 'c',
+        exec: './a.out',
+        compile: 'gcc',
+    },
+    'c++': {
+        fileType: 'cpp',
+        exec: './a.out',
+        compile: 'g++',
+    },    
+    'java': {
+        fileType: 'java',
+        exec: 'java',
+        compile: 'javac',
+    },
+    'python': {
+        fileType: 'py',
+        exec: 'python'
+    },
+    'javascript': {
+        fileType: 'js',
+        exec: 'node'
+    }
 };
 
-async function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method === 'POST') {
         const { language, code, stdin } = req.body;
 
-        if (!languageMap[language]) {
-            return res.status(400).json({ message: 'Unsupported language' });
+        if (!languages[language]) {
+            return res.status(400).json({ message: 'Language not supported right now.' });
         }
+
+        const { fileType, exec, compile} = languages[language];
+        const fileName = `temp.${fileType}`;
+        const tempDir = os.tmpdir();
+        console.log(tempDir)
+        const filePath = `${tempDir}/${fileName}`;
 
         try {
-            const response = await axios.post(
-                `${JUDGE0_API_URL}?base64_encoded=false&wait=true`,
-                {
-                    source_code: code,
-                    language_id: languageMap[language],
-                    stdin: stdin,
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
-                        'X-RapidAPI-Key': JUDGE0_API_KEY,
-                    },
-                }
-            );
 
-            return res.status(200).json(response.data);
+            await writeFile(filePath, code);
+
+            if (compile) { // Requires compiling
+                await execPromise(`${compile} ${filePath}`, stdin); // Compile code
+            }
+
+            const output = await execPromise(`${exec} ${filePath}`, stdin); // Async call to execute code
+
+            await unlink(filePath); // Removes file
+
+            return res.status(200).json({ 
+                output: output });
+
         } catch (error) {
-            console.error('Error compiling code:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+            console.error('Error executing code:', error);
+            return res.status(500).json({ message: 'Internal server error', error: error });
         }
     } else {
-        res.setHeader('Allow', ['POST']);
-        res.status(405).end(`Method ${req.method} Not Allowed`);
+        res.status(405).json({ message: 'Method Not Allowed'});
     }
 }
 
-export default handler
+function execPromise(command, stdin) {
+    return new Promise((resolve, reject) => {
+        const process = exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(stderr || error);
+            } else {
+                resolve(stdout);
+            }
+        });
+
+        if (stdin) {
+            process.stdin.write(stdin);
+            process.stdin.end();
+        }
+    });
+}
