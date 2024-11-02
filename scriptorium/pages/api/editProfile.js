@@ -1,17 +1,9 @@
+import { protectedRoute } from '../../middleware/auth';
 import { prisma } from '../../prisma/prisma';
-import { verifyAccessToken } from '../../utils/auth';
-
 
 async function handler(req, res) {
     if (req.method === 'PUT') {
-        const decoded = verifyAccessToken(req.headers.authorization)
-
-        if (!decoded) { // Return 401 if token is invalid and let frontend handle calling refresh token 
-            return res.status(401).json({
-                message: 'User Unauthorized'
-            })
-        }
-
+        
         const { firstName, lastName, phoneNum, avatarUrl } = req.body;
         const updateData = {};
 
@@ -24,7 +16,7 @@ async function handler(req, res) {
 
             const updatedUser = await prisma.user.update({
                 where: {
-                    id: decoded.id
+                    id: req.user.id
                 },
                 data: updateData
             })
@@ -45,4 +37,4 @@ async function handler(req, res) {
     }
 }
 
-export default handler
+export default protectedRoute(handler)

@@ -1,22 +1,11 @@
+import { protectedRoute } from '../../middleware/auth';
 import { prisma } from '../../prisma/prisma';
-import { verifyAccessToken } from '../../utils/auth';
-
 
 async function handler(req, res) {
     if (req.method === 'GET') {
-        const decoded = verifyAccessToken(req.headers.authorization) // Checks Token timestamp
-        // If token is invalid, return 401
-
-        if (!decoded) { 
-            //TODO: Try to generate new access token, if refresh token is valid
-            return res.status(401).json({
-                message: 'Token Expired' // FRONTEND responsible for sending another request to create new access token
-            })
-        }
-
         const user = await prisma.user.findUnique({
             where: {
-                id: decoded.id
+                id: req.user.id
             }
         })
 
@@ -34,4 +23,4 @@ async function handler(req, res) {
     }
 }
 
-export default handler
+export default protectedRoute(handler)
