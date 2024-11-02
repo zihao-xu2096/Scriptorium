@@ -55,7 +55,7 @@ async function handler(req, res) {
             const avatars = path.join(process.cwd(), 'public', 'avatars');
             const avatarFiles = await readdir(avatars);
 
-            const randomAvatar = avatarFiles[Math.floor(Math.random() * avatarFiles.length)];
+            const randomAvatar = avatarFiles[Math.floor(Math.random() * avatarFiles.length)]; // Could consider change logic to schema @defualt()?? 
 
             // Create User
             const user = await prisma.user.create({
