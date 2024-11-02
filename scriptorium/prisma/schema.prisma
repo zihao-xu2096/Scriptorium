@@ -24,7 +24,7 @@ model User {
   avatarUrl String? // URL of Avatar image
   phoneNum  String   @unique
   //templates Template[] // One-to-many relation
-  //Posts Post[] // One-to-many relation
+  posts     Post[] // One-to-many relation
   comments  Comment[]
 }
 
@@ -33,6 +33,7 @@ model Post {
   id          Int       @id @default(autoincrement())
   createdAt   DateTime  @default(now())
   createdBy   Int
+  user        User      @relation(fields: [createdBy], references: [id])
   title       String    
   content     String
   description String?
@@ -46,7 +47,8 @@ model Post {
 }
 
 model Tag {
-  label       String    @id
+  id          Int       @id @default(autoincrement())
+  label       String    @unique
   posts       Post[]
 }
 
