@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma/prisma';
-import { generateAccessToken, generateRefreshToken } from '../../utils/auth';
+import { generateAccessToken, generateRefreshToken } from '../../utils/tokens';
 
 const bcrypt = require('bcrypt');
 
