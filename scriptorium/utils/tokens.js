@@ -22,7 +22,7 @@ export function generateRefreshToken(user) {
     return jwt.sign(payload, JWT_REFRESH_SECRET, {
         expiresIn: JWT_REFRESH_EXPIRES_IN,
     })
-} // TODO: Instead of signing User obj sign user id
+}
 
 export function verifyAccessToken(token) {
     if (!token?.startsWith('Bearer ')) { // If it doesn't stat with 'Bearer '

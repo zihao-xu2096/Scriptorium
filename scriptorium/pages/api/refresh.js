@@ -1,7 +1,7 @@
 // Refresh token API by creating a new file in the pages/api directory called refreshToken.js.
 // This file will be responsible for generating a new access token when the current access token expires.
 // The refreshToken.js file will contain the following code:
-import { generateAccessToken, verifyRefreshToken } from '../../utils/auth';
+import { generateAccessToken, verifyRefreshToken } from '../../utils/tokens';
 
 
 async function handler(req, res) {
@@ -12,7 +12,6 @@ async function handler(req, res) {
         }
 
         const user = verifyRefreshToken(refreshToken);
-        console.log(user);
 
         if (!user) {
             return res.status(401).json({ message: 'Refresh Token Expired' });
