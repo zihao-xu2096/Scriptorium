@@ -1,0 +1,21 @@
+import { verifyAccessToken } from '../utils/tokens.js';
+
+export function protectedRoute(handler) {
+    return async (req, res) => {
+        const token = req.headers.authorization;
+
+        if (!token) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const decoded = verifyAccessToken(token);
+        if (!decoded) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        req.user = decoded;
+
+        // Call handler API logic
+        return handler(req, res);
+    };
+}
