@@ -13,12 +13,22 @@ async function handler(req, res) {
         if (avatarUrl) updateData.avatarUrl = avatarUrl;
 
         try {
-
             const updatedUser = await prisma.user.update({
                 where: {
                     id: req.user.id
                 },
-                data: updateData
+                data: updateData,
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    userType: true,
+                    avatar: true,
+                    phoneNumber: true,
+                    createdAt: true,
+                    updatedAt: true,
+                }
             })
 
             return res.status(200).json({
@@ -27,13 +37,14 @@ async function handler(req, res) {
             })
 
         } catch (error) {
-            console.error(error)
-            return res.status(500).json({ message: 'Internal Server Error' });
+            console.error('Error updating user:', error);
+            res.status(500).json({ error: 'Error updating user' });
         }
 
 
     } else {
-        res.status(405).json({ message: 'Method Not Allowed' });
+        res.setHeader('Allow', ['PUT']);
+        res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
 }
 

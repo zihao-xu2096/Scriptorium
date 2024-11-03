@@ -80,7 +80,7 @@ async function handler(req, res) {
                         firstName: firstName,
                         lastName: lastName,
                         phoneNum: phone,
-                    avatarUrl: `public/avatars/${randomAvatar}`
+                        avatarUrl: `public/avatars/${randomAvatar}`
                     },
                     select: {
                         id: true,
