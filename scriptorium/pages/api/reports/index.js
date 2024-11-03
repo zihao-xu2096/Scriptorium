@@ -16,7 +16,10 @@ export default async function handler(req, res) {
 
     const posts = await prisma.post.findMany({ 
       include: {
-        tags: true
+        reports: true,
+        _count: {
+          select: { reports: true }
+        }
       },
       orderBy: {
         reports: {
@@ -29,7 +32,10 @@ export default async function handler(req, res) {
 
     const comments = await prisma.comment.findMany({ 
       include: {
-        tags: true
+        reports: true,
+        _count: {
+          select: { reports: true }
+        }
       },
       orderBy: {
         reports: {
@@ -39,6 +45,7 @@ export default async function handler(req, res) {
         }
       },
     });
+
 
     res.status(200).json(posts);
   } else {

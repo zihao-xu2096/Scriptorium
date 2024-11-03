@@ -1,7 +1,8 @@
 import { prisma } from "@/utils/db"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { protectedRoute } from "../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "POST") {
     //creating a report
     const { postId: id } = req.query;
@@ -26,6 +27,11 @@ export default async function handler(req, res) {
       const report = await prisma.report.create({
         data: {
           explanation,
+          createdBy: {
+            connect: {
+              id: req.user.id
+            }
+          },
           post: {
             connect: {
               id: parseInt(id)
@@ -40,7 +46,7 @@ export default async function handler(req, res) {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' || error.code === 'P2025') {
-          res.status(400).json({ message: 'Post not found' });
+          res.status(400).json({ message: 'Post or user not found' });
           return;
         }
         res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
@@ -53,3 +59,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ['POST']);

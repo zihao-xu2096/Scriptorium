@@ -48,4 +48,4 @@ async function handler(req, res) {
     }
 }
 
-export default protectedRoute(handler)
+export default protectedRoute(handler, ['PUT']);

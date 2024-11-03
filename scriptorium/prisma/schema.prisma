@@ -28,6 +28,7 @@ model User {
   comments  Comment[]
   createdAt DateTime @default(now())
   updatedAt       DateTime       @updatedAt
+  reports   Report[]
 }
 
 model CodeTemplate {
@@ -55,8 +56,8 @@ model TemplateTag {
 model Post {
   id          Int       @id @default(autoincrement())
   createdAt   DateTime  @default(now())
-  createdBy   Int
-  user        User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  userId      Int
+  createdBy   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String    
   content     String
   description String?
@@ -65,8 +66,8 @@ model Post {
   //templates   Template[]
   comments    Comment[]
   reports     Report[]
-  upvotes     Int
-  downvotes   Int
+  upvotes     Int       @default(0)
+  downvotes   Int       @default(0)
 }
 
 model PostTag {
@@ -80,7 +81,7 @@ model Comment {
   createdAt   DateTime  @default(now())
   content     String
   userId      Int
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   isHidden    Boolean   @default(false)
   postId      Int
   post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -88,12 +89,14 @@ model Comment {
   parent      Comment?  @relation("CommentReply", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[] @relation("CommentReply")
   reports     Report[]
-  upvotes     Int
-  downvotes   Int
+  upvotes     Int       @default(0)
+  downvotes   Int       @default(0)
 }
 
 model Report {
   id          Int       @id @default(autoincrement())
+  userId      Int     
+  createdBy   User      @relation(fields: [userId], references: [id], onDelete: Cascade)  
   explanation String
   postId      Int?
   post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
