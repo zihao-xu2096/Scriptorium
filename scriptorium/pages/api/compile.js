@@ -38,10 +38,11 @@ export default async function handler(req, res) {
             return res.status(400).json({ message: 'Language not supported right now.' });
         }
 
-        const { fileType, exec, compile} = languages[language];
-        const fileName = `temp.${fileType}`;
+        const { fileType, exec, compile } = languages[language];
+        const className = language === 'java' ? 'Main' : 'temp';
+        const fileName = `${className}.${fileType}`;
         const tempDir = os.tmpdir();
-        const filePath = `${tempDir}/${fileName}`;
+        const filePath = path.join(tempDir, fileName);
 
         try {
             await writeFile(filePath, code);
@@ -52,7 +53,6 @@ export default async function handler(req, res) {
 
             let execCommand = `${exec} ${filePath}`;
             if (language === 'java') {
-                const className = path.basename(fileName, `.${fileType}`);
                 execCommand = `${exec} -cp ${tempDir} ${className}`;
             }
 
@@ -60,11 +60,12 @@ export default async function handler(req, res) {
 
             await unlink(filePath); // Removes file
             if (language === 'java') {
-                await unlink(path.join(tempDir, `${path.basename(fileName, `.${fileType}`)}.class`)); // Remove the .class file
+                await unlink(path.join(tempDir, `${className}.class`)); // Remove the .class file
             }
 
             return res.status(200).json({ 
-                output: output });
+                output: output 
+            });
 
         } catch (error) {
             console.error('Error executing code:', error);
