@@ -1,9 +1,9 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/utils/db";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export default async function handler(req, res) {
   if (req.method === "PUT") {
-    const { postId: id } = req.query;
+    const { postId: id, userId: userID } = req.query;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
@@ -12,6 +12,24 @@ export default async function handler(req, res) {
 
     if (!parseInt(id)) {
       res.status(400).json({ message: "Invalid ID type provided" })
+      return;
+    }
+
+    // Check if user type is admin
+    try {
+      let user = await prisma.user.findUnique({
+        where: {
+          id: parseInt(userID)
+        }
+      });
+
+      if (user.userType !== 'ADMIN') {
+        res.status(403).json({ message: "Unauthorized" });
+        return;
+      }
+      
+    } catch (error) {
+      res.status(500).json({ message: error.message });
       return;
     }
 

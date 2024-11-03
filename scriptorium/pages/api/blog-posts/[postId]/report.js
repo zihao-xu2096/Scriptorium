@@ -1,7 +1,8 @@
-import { prisma } from "@/utils/db"
+import { prisma } from "@/utils/db";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { protectedRoute } from "../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "POST") {
     //creating a report
     const { postId: id } = req.query;
@@ -53,3 +54,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler);

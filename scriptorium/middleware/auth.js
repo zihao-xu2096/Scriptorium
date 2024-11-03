@@ -2,6 +2,7 @@ import { verifyAccessToken } from '../utils/tokens.js';
 
 export function protectedRoute(handler) {
     return async (req, res) => {
+        
         const token = req.headers.authorization;
 
         if (!token) {
