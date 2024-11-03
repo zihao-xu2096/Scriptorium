@@ -1,6 +1,8 @@
 import { prisma } from "@/utils/db";
+import { protectedRoute } from "../../../../middleware/auth";
 
-export default async function handler(req, res) {
+
+async function handler(req, res) {
   const { id } = req.query;
   const templateId = parseInt(id);
 
@@ -93,3 +95,5 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 }
+
+export default protectedRoute(handler, ["PUT", "DELETE"]);
