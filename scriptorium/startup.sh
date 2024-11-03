@@ -107,14 +107,21 @@ if [ ! -d "prisma" ]; then
     exit 1
 fi
 
+if ! npx prisma migrate deploy; then
+    log_error "Failed to run database migrations"
+    exit 1
+fi
+
 log_info "Running database migrations..."
 if ! npx prisma generate; then
     log_error "Failed to generate Prisma client"
     exit 1
 fi
 
-if ! npx prisma migrate deploy; then
-    log_error "Failed to run database migrations"
+# Add a database push to ensure schema is synchronized
+log_info "Ensuring database schema is up to date..."
+if ! npx prisma db push; then
+    log_error "Failed to push database schema"
     exit 1
 fi
 

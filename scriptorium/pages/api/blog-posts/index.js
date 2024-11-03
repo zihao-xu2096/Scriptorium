@@ -1,4 +1,5 @@
-import { prisma } from "@/utils/db"
+import { prisma } from '@/prisma/prisma';
+
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { protectedRoute } from "../../../middleware/auth";
 

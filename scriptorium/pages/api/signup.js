@@ -1,6 +1,6 @@
 import { readdir } from 'fs/promises';
 import path from 'path';
-import { prisma } from '../../prisma/prisma';
+import { prisma } from '@/prisma/prisma';
 const bcrypt = require('bcrypt');
 
 // TODO: Make sure status codes align with message i.e. 404 not found, 400 bad request etc
@@ -9,9 +9,9 @@ async function validateEmailFormat(email) {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        return False
+        return false
     }
-    return True
+    return true
 }
 
 async function existingUser(email) {

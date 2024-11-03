@@ -1,4 +1,4 @@
-import { prisma } from "@/utils/db"
+import { prisma } from '@/prisma/prisma';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export default async function handler(req, res) {
