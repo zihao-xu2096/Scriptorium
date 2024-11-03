@@ -88,8 +88,8 @@ async function handler(req, res) {
                         firstName: true,
                         lastName: true,
                         userType: true,
-                        avatar: true,
-                        phoneNumber: true,
+                        avatarUrl: true,
+                        phoneNum: true,
                         createdAt: true,
                         updatedAt: true,
                     }

@@ -1,4 +1,4 @@
-import { prisma } from '../../../utils/db';
+import { prisma } from '@/utils/db';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -7,6 +7,8 @@ export default async function handler(req, res) {
   if (isNaN(templateId)) {
     return res.status(400).json({ error: 'Invalid template ID' });
   }
+
+  //TODO: Need to check sessionID is the same as template.authorID
 
   if (req.method === 'PUT') {
     try {
