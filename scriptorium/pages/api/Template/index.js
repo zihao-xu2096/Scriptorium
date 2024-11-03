@@ -1,6 +1,8 @@
 import { prisma } from '@/prisma/prisma';
+import { protectedRoute } from '../../../middleware/auth';
 
-export default async function handler(req, res) {
+
+async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       // Validate required fields
@@ -125,3 +127,5 @@ export default async function handler(req, res) {
     res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 }
+
+export default protectedRoute(handler, ['POST']);
