@@ -37,7 +37,7 @@ model Post {
   title       String    
   content     String
   description String?
-  isHidden    Boolean
+  isHidden    Boolean   @default(false)
   tags        Tag[]
   //templates   Template[]
   comments    Comment[]
@@ -58,6 +58,7 @@ model Comment {
   content     String
   userId      Int
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHidden    Boolean   @default(false)
   postId      Int
   post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parentId    Int?

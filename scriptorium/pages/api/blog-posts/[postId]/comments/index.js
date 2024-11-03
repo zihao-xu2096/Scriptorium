@@ -95,13 +95,14 @@ export default async function handler(req, res) {
       res.status(400).json({ message: "Invalid page and limit values" })
     }
     
-    if (sortBy && (sortBy !== "mostControversial" || sortBy !== "mostValued")) {
+    if (sortBy && !(sortBy === "mostControversial" || sortBy === "mostValued")) {
       res.status(400).json({ message: "Invalid sort values" });
       return;
     }
 
     const comments = await prisma.comment.findMany({
       where : {
+        isHidden: false,
         postId: parseInt(postId), 
         replies: {
           some: {}

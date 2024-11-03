@@ -26,6 +26,11 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Post not found.' });
       }
 
+      if (post.isHidden) {
+        res.status(404).json({ error: 'Post was hidden by admins' });
+        return;
+      }
+
       res.status(200).json({post});
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {

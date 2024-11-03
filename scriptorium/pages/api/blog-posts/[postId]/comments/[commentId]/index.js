@@ -22,8 +22,14 @@ export default async function handler(req, res) {
         }
       });
 
-      if (!commentId) {
-        return res.status(404).json({ error: 'Comment not found.' });
+      if (!comment) {
+        res.status(404).json({ error: 'Comment not found.' });
+        return;
+      }
+
+      if (comment.isHidden) {
+        res.status(404).json({ error: 'Comment was hidden by admins' });
+        return;
       }
 
       res.status(200).json({comment});

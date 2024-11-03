@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (sortBy && (sortBy !== "mostControversial" || sortBy !== "mostValued")) {
+    if (sortBy && !(sortBy === "mostControversial" || sortBy === "mostValued")) {
       res.status(400).json({ message: "Invalid sort values" });
       return;
     }
@@ -83,6 +83,7 @@ export default async function handler(req, res) {
     const posts = await prisma.post.findMany({
       where : {
         AND: {
+          isHidden: false,
           title: title ? {
             contains: title
           } : undefined, 

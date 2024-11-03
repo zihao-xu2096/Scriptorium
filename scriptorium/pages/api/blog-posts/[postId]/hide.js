@@ -3,7 +3,7 @@ import { prisma } from "@/utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "PUT") {
-    const { commentId: id, ratingType } = req.query;
+    const { postId: id } = req.query;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
@@ -15,27 +15,22 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!ratingType || (ratingType !== "upvote" && ratingType !== "downvote")) {
-      res.status(400).json({ message: "Invalid rating type provided" })
-      return;
-    }
-
     try {
-      let comment = await prisma.comment.update({
+      let post = await prisma.post.update({
         where: {
           id: parseInt(id)
         }, 
-        data: ratingType === "upvote" 
-        ? { upvotes: { increment: 1 } }
-        : { downvotes: { increment: 1 } },
+        data: {
+          isHidden: true
+        },
         include: { tags: true }
       })
       
-      res.status(200).json(comment);
+      res.status(200).json(post);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {
-          return res.status(404).json({ error: 'Comment not found.' });
+          return res.status(404).json({ error: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;

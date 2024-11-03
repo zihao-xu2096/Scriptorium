@@ -3,7 +3,7 @@ import { prisma } from "@/utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "PUT") {
-    const { commentId: id, ratingType } = req.query;
+    const { commentId: id } = req.query;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
@@ -15,19 +15,14 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!ratingType || (ratingType !== "upvote" && ratingType !== "downvote")) {
-      res.status(400).json({ message: "Invalid rating type provided" })
-      return;
-    }
-
     try {
       let comment = await prisma.comment.update({
         where: {
           id: parseInt(id)
         }, 
-        data: ratingType === "upvote" 
-        ? { upvotes: { increment: 1 } }
-        : { downvotes: { increment: 1 } },
+        data: {
+          isHidden: true
+        },
         include: { tags: true }
       })
       
