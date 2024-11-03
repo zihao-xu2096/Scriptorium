@@ -119,6 +119,8 @@ if [ -d "prisma/migrations" ]; then
     log_info "Existing migrations deleted"
 fi
 
+npx prisma migrate dev --name init
+
 log_info "Running database migrations..."
 if ! npx prisma generate; then
     log_error "Failed to generate Prisma client"
