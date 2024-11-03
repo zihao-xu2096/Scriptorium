@@ -15,19 +15,42 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement()) // Primary key
-  userType  String   @default("user")
+  userType  String   @default("USER")
   email     String   @unique
   password  String
-  createdAt DateTime @default(now())
   firstName String
   lastName  String
   avatarUrl String? // URL of Avatar image
-  phoneNum  String   @unique
-  //templates Template[] // One-to-many relation
+  phoneNum  String?   @unique
+  createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
+  savedTemplates  CodeTemplate[] @relation("SavedTemplates")
   posts     Post[] // One-to-many relation
   comments  Comment[]
+  createdAt DateTime @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
+model CodeTemplate {
+  id          Int           @id @default(autoincrement())
+  title       String
+  explanation String
+  language    String
+  code        String
+  authorId    Int
+  author      User          @relation("AuthoredTemplates", fields: [authorId], references: [id])
+  savedBy     User[]        @relation("SavedTemplates")
+  tags        TemplateTag[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model TemplateTag {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  codeTemplates CodeTemplate[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
 
 model Post {
   id          Int       @id @default(autoincrement())
@@ -38,7 +61,7 @@ model Post {
   content     String
   description String?
   isHidden    Boolean   @default(false)
-  tags        Tag[]
+  tags        PostTag[]
   //templates   Template[]
   comments    Comment[]
   reports     Report[]
@@ -46,7 +69,7 @@ model Post {
   downvotes   Int
 }
 
-model Tag {
+model PostTag {
   id          Int       @id @default(autoincrement())
   label       String    @unique
   posts       Post[]
