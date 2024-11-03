@@ -1,7 +1,8 @@
 import { prisma } from "@/utils/db"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { protectedRoute } from "../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "POST") {
     //creating a blog post
     const { title, description, tags } = req.body;
@@ -12,11 +13,10 @@ export default async function handler(req, res) {
     }
 
     try {
-      const blog = await prisma.post.create({
+      const post = await prisma.post.create({
         data: {
           title,
           description,
-          createdAt: new Date(Date.now()),
           content: '',
           tags: {
             connectOrCreate: tags?.map(tag => ({
@@ -24,34 +24,21 @@ export default async function handler(req, res) {
               create: { label: tag }
             })) || [],
           },
-          isHidden: false,
-          upvotes: 0,
-          downvotes: 0,
-          user: {
-            connectOrCreate: {
-              where: { id: 1 },
-              create: {
-                userType: "ADMIN",
-                email: "a@b.c",
-                password: "abc",
-                createdAt: new Date(Date.now()),
-                firstName: "Jane",
-                lastName: "Doe",
-                avatarUrl: "sdghja",
-                phoneNum: "67318290"
-              }
+          createdBy: {
+            connect: {
+              id: req.user.id
             }
           }
         },
       })
 
-      res.status(201).json(blog);
+      res.status(201).json(post);
       return;
 
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' || error.code === 'P2025') {
-          res.status(400).json({ message: 'Author not found' });
+          res.status(400).json({ message: 'User not found' });
           return;
         }
         res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
@@ -82,8 +69,10 @@ export default async function handler(req, res) {
 
     const posts = await prisma.post.findMany({
       where : {
-        AND: {
-          isHidden: false,
+          OR: [
+            { isHidden: false }, 
+            req.user ? { userId: req.user.id } : undefined
+          ].filter(value => !!value), 
           title: title ? {
             contains: title
           } : undefined, 
@@ -102,10 +91,13 @@ export default async function handler(req, res) {
 
             }
           }**/
-        }
       }, 
       include: {
-        tags: true
+        tags: {
+          select: {
+            label: true
+          }
+        }
       },
       orderBy: sortBy === "mostControversial" 
       ? { downvotes: 'desc' } 
@@ -121,3 +113,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ['POST']);

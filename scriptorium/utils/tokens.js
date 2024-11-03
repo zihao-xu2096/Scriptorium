@@ -8,6 +8,7 @@ export function generateAccessToken(user) {
     const payload ={
         id: user.id,
         email: user.email,
+        userType: user.userType
     }
     return jwt.sign(payload, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
@@ -18,6 +19,7 @@ export function generateRefreshToken(user) {
     const payload ={
         id: user.id,
         email: user.email,
+        userType: user.userType
     }
     return jwt.sign(payload, JWT_REFRESH_SECRET, {
         expiresIn: JWT_REFRESH_EXPIRES_IN,

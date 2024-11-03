@@ -1,9 +1,10 @@
 import { prisma } from "@/utils/db"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { protectedRoute } from "../../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "POST") {
-    //creating a blog post
+    //creating a comment
     const { content, parent } = req.body;
     const { postId } = req.query;
 
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     if (parent && !parseInt(parent)) {
-      res.status(400).json({ message: "Invalid parent ID type provided" })
+      res.status(400).json({ message: "Invalid parent ID type provided" });
       return;
     }
 
@@ -40,26 +41,14 @@ export default async function handler(req, res) {
           parent: parent ? {
             connect: { id: parseInt(parent) }
           } : undefined,
-          user: {
-            connectOrCreate: {
-              where: { id: 1 },
-              create: {
-                userType: "ADMIN",
-                email: "a@b.c",
-                password: "abc",
-                createdAt: new Date(Date.now()),
-                firstName: "Jane",
-                lastName: "Doe",
-                avatarUrl: "sdghja",
-                phoneNum: "67318290"
-              }
+          createdBy: {
+            connect: {
+              id: req.user.id
             }
           }
         }, 
         include: {
-          parent: true,
-          replies: true,
-          reports: true
+          replies: true
         }
       })
 
@@ -69,7 +58,7 @@ export default async function handler(req, res) {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' || error.code === 'P2025') {
-          res.status(400).json({ message: 'Post or parent comment not found' });
+          res.status(404).json({ message: 'Post, user or parent comment not found' });
           return;
         }
         res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
@@ -102,7 +91,10 @@ export default async function handler(req, res) {
 
     const comments = await prisma.comment.findMany({
       where : {
-        isHidden: false,
+        OR: [
+          { isHidden: false }, 
+          req.user ? { userId: req.user.id } : undefined
+        ].filter(value => !!value), 
         postId: parseInt(postId), 
         replies: {
           some: {}
@@ -125,3 +117,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ["POST"]);

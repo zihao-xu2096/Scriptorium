@@ -1,7 +1,8 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/utils/db";
+import { protectedRoute } from "../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "PUT") {
     const { postId: id, ratingType } = req.query;
 
@@ -23,7 +24,10 @@ export default async function handler(req, res) {
     try {
       let post = await prisma.post.update({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          createdBy: {
+            id: req.user.id
+          }
         }, 
         data: ratingType === "upvote" 
         ? { upvotes: { increment: 1 } }
@@ -49,3 +53,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ["PUT"]);

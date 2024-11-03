@@ -18,17 +18,16 @@ export default async function handler(req, res) {
     try {
       const comment = await prisma.comment.findUnique({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          OR: [
+            { isHidden: false }, 
+            req.user ? { userId: req.user.id } : undefined
+          ].filter(value => !!value)
         }
       });
 
       if (!comment) {
         res.status(404).json({ error: 'Comment not found.' });
-        return;
-      }
-
-      if (comment.isHidden) {
-        res.status(404).json({ error: 'Comment was hidden by admins' });
         return;
       }
 

@@ -1,7 +1,8 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/utils/db";
+import { protectedRoute } from "../../../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "PUT") {
     const { commentId: id } = req.query;
 
@@ -12,6 +13,11 @@ export default async function handler(req, res) {
 
     if (!parseInt(id)) {
       res.status(400).json({ message: "Invalid ID type provided" })
+      return;
+    }
+
+    if (req.user.userType !== "ADMIN") {
+      res.status(403).json({ message: "Insufficient permissions" });
       return;
     }
 
@@ -44,3 +50,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ["PUT"]);

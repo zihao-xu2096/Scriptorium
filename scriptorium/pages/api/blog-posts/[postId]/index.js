@@ -1,7 +1,8 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@/utils/db";
+import { protectedRoute } from "../../../../middleware/auth";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "GET") { 
     const { postId: id } = req.query;
 
@@ -18,17 +19,16 @@ export default async function handler(req, res) {
     try {
       const post = await prisma.post.findUnique({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          OR: [
+            { isHidden: false }, 
+            req.user ? { userId: req.user.id } : undefined
+          ].filter(value => !!value)
         }
       });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found.' });
-      }
-
-      if (post.isHidden) {
-        res.status(404).json({ error: 'Post was hidden by admins' });
-        return;
       }
 
       res.status(200).json({post});
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     const { postId: id } = req.query;
 
     if (!id) {
-      res.status(400).json({ message: "id not provided" })
+      res.status(400).json({ message: "ID not provided" })
       return;
     }
 
@@ -61,7 +61,8 @@ export default async function handler(req, res) {
     try {
       let post = await prisma.post.update({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          userId: req.user.id
         }, 
         data: {
           title,
@@ -113,24 +114,20 @@ export default async function handler(req, res) {
     const { postId: id } = req.query;
 
     if (!id) {
-      res.status(400).json({ message: "id not provided" })
+      res.status(400).json({ message: "ID not provided" })
       return;
     }
 
-    if (isNaN(Number(id))) {
+    if (!parseInt(id)) {
       res.status(400).json({ message: "Invalid ID type provided" })
       return;
     }
 
     try {
-      await prisma.comment.deleteMany({
-        where: {
-          userId: Number(id)
-        }
-      })
       const deletePost = await prisma.post.delete({
         where: {
-          id: Number(id)
+          id: parseInt(id),
+          userId: req.user.id
         }
       });
 
@@ -151,3 +148,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ["PUT", "DELETE"]);
