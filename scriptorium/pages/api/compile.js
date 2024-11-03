@@ -58,11 +58,9 @@ export default async function handler(req, res) {
 
             const output = await execPromise(execCommand, stdin); // Async call to execute code
 
-            await unlink(filePath); // Removes source file
+            await unlink(filePath); // Removes file
             if (language === 'java') {
                 await unlink(path.join(tempDir, `${className}.class`)); // Remove the .class file
-            } else if (language === 'c' || language === 'c++') {
-                await unlink(path.join(tempDir, 'a.out')); // Remove the compiled executable
             }
 
             return res.status(200).json({ 
