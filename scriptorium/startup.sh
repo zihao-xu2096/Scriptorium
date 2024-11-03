@@ -113,6 +113,12 @@ if [ -f "prisma/dev.db" ]; then
     log_info "Existing database deleted"
 fi
 
+log_info "Cleaning up migrations..."
+if [ -d "prisma/migrations" ]; then
+    rm -rf prisma/migrations
+    log_info "Existing migrations deleted"
+fi
+
 log_info "Running database migrations..."
 if ! npx prisma generate; then
     log_error "Failed to generate Prisma client"
