@@ -31,7 +31,7 @@ const languages = {
 
 export default async function handler(req, res) {
     if (req.method === 'POST') {
-        const { language, code, stdin } = req.body;
+        const {language, code, stdin} = req.body;
 
         if (!languages[language]) {
             return res.status(400).json({ message: 'Language not supported right now.' });
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
             await writeFile(filePath, code);
 
             if (compile) { // Requires compiling
-                await execPromise(`${compile} ${filePath}`, stdin); // Compile code
+                await execPromise(`${compile} ${filePath}`); // Compile code
             }
 
             const output = await execPromise(`${exec} ${filePath}`, stdin); // Async call to execute code
