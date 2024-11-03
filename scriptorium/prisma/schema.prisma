@@ -33,7 +33,7 @@ model Post {
   id          Int       @id @default(autoincrement())
   createdAt   DateTime  @default(now())
   createdBy   Int
-  user        User      @relation(fields: [createdBy], references: [id])
+  user        User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   title       String    
   content     String
   description String?
@@ -54,22 +54,25 @@ model Tag {
 
 model Comment {
   id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
   content     String
   userId      Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   postId      Int
-  post        Post      @relation(fields: [postId], references: [id])
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   parentId    Int?
-  parent      Comment?  @relation("CommentReply", fields: [parentId], references: [id])
+  parent      Comment?  @relation("CommentReply", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[] @relation("CommentReply")
   reports     Report[]
+  upvotes     Int
+  downvotes   Int
 }
 
 model Report {
   id          Int       @id @default(autoincrement())
   explanation String
   postId      Int?
-  post        Post?     @relation(fields: [postId], references: [id])
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
   commentId   Int?
   comment     Comment?  @relation(fields: [commentId], references: [id])
 }

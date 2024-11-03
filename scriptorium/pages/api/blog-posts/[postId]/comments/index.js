@@ -4,29 +4,42 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 export default async function handler(req, res) {
   if (req.method === "POST") {
     //creating a blog post
-    const { title, description, tags } = req.body;
+    const { content, parent } = req.body;
+    const { postId } = req.query;
 
-    if (!title) {
+    if (!postId) {
+      res.status(400).json({ message: "Blog ID not provided" })
+      return;
+    }
+
+    if (!parseInt(postId)) {
+      res.status(400).json({ message: "Invalid blog ID type provided" })
+      return;
+    }
+
+    if (!content) {
       res.status(400).json({ message: "Title missing" });
       return;
     }
 
+    if (parent && !parseInt(parent)) {
+      res.status(400).json({ message: "Invalid parent ID type provided" })
+      return;
+    }
+
     try {
-      const blog = await prisma.post.create({
+      const comment = await prisma.comment.create({
         data: {
-          title,
-          description,
+          content,
           createdAt: new Date(Date.now()),
-          content: '',
-          tags: {
-            connectOrCreate: tags?.map(tag => ({
-              where: { label: tag },
-              create: { label: tag }
-            })) || [],
-          },
-          isHidden: false,
           upvotes: 0,
           downvotes: 0,
+          post: {
+            connect: { id: parseInt(postId) }
+          }, 
+          parent: parent ? {
+            connect: { id: parseInt(parent) }
+          } : undefined,
           user: {
             connectOrCreate: {
               where: { id: 1 },
@@ -42,16 +55,21 @@ export default async function handler(req, res) {
               }
             }
           }
-        },
+        }, 
+        include: {
+          parent: true,
+          replies: true,
+          reports: true
+        }
       })
 
-      res.status(201).json(blog);
+      res.status(201).json(comment);
       return;
 
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' || error.code === 'P2025') {
-          res.status(400).json({ message: 'Author not found' });
+          res.status(400).json({ message: 'Post or parent comment not found' });
           return;
         }
         res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
@@ -61,50 +79,36 @@ export default async function handler(req, res) {
       }
     }
   } else if (req.method === "GET") {
-    const { title, content, tags, templates, page = 1, limit = 10, sortBy } = req.query;
+    const { postId, page = 1, limit = 10, sortBy } = req.query;
+    
+    if (!postId) {
+      res.status(400).json({ message: "Blog ID not provided" })
+      return;
+    }
 
-    if (title && typeof(title) !== "string") {
-      res.status(400).json({ message: "Title must be a string" });
+    if (!parseInt(postId)) {
+      res.status(400).json({ message: "Invalid blog ID type provided" })
       return;
     }
 
     if (!parseInt(page) || !parseInt(limit)) {
-      res.status(400).json({ message: "Invalid page and limit values" });
-      return;
+      res.status(400).json({ message: "Invalid page and limit values" })
     }
-
+    
     if (sortBy && (sortBy !== "mostControversial" || sortBy !== "mostValued")) {
       res.status(400).json({ message: "Invalid sort values" });
       return;
     }
 
-    const tagNames = tags?.split(",").map(tag => tag.trim()) || [];
-
-    const posts = await prisma.post.findMany({
+    const comments = await prisma.comment.findMany({
       where : {
-        AND: {
-          title: title ? {
-            contains: title
-          } : undefined, 
-          content: content ? {
-            contains: content
-          } : undefined,
-          tags: tags ? {
-            some: {
-              label: {
-                in: tagNames
-              }
-            }
-          } : undefined,
-          /**templates: {
-            some: {
-
-            }
-          }**/
+        postId: parseInt(postId), 
+        replies: {
+          some: {}
         }
       }, 
       include: {
-        tags: true
+        replies: true
       },
       orderBy: sortBy === "mostControversial" 
       ? { downvotes: 'desc' } 
@@ -115,7 +119,7 @@ export default async function handler(req, res) {
       take: parseInt(limit)
     });
 
-    res.status(200).json(posts);
+    res.status(200).json(comments);
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }
