@@ -1,8 +1,11 @@
-import jwt from 'jsonwebtoken';
-const JWT_SECRET = 'adfjasjdflasja89d(&(*&d9u1df'
-const JWT_EXPIRES_IN = '1h'
-const JWT_REFRESH_SECRET = 'adfasdfasdfasdfasdfasdf'
-const JWT_REFRESH_EXPIRES_IN = '7d'
+import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
+const JWT_SECRET = process.env.JWT_SECRET
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN
+
+dotenv.config()
 
 export function generateAccessToken(user) {
     const payload ={
