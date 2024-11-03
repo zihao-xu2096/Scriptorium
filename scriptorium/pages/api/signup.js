@@ -1,6 +1,6 @@
 import { readdir } from 'fs/promises';
 import path from 'path';
-import { prisma } from '../../prisma/prisma';
+import { prisma } from '@/prisma/prisma';
 const bcrypt = require('bcrypt');
 
 // TODO: Make sure status codes align with message i.e. 404 not found, 400 bad request etc

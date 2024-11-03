@@ -1,5 +1,6 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { prisma } from "@/utils/db";
+import { prisma } from '@/prisma/prisma';
+
 import { protectedRoute } from "../../../../middleware/auth";
 
 async function handler(req, res) {

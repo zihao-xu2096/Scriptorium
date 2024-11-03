@@ -107,6 +107,12 @@ if [ ! -d "prisma" ]; then
     exit 1
 fi
 
+log_info "Cleaning up existing database..."
+if [ -f "prisma/dev.db" ]; then
+    rm prisma/dev.db
+    log_info "Existing database deleted"
+fi
+
 npx prisma migrate dev --name init
 
 log_info "Running database migrations..."
@@ -115,8 +121,9 @@ if ! npx prisma generate; then
     exit 1
 fi
 
-if ! npx prisma migrate deploy; then
-    log_error "Failed to run database migrations"
+log_info "Pushing database migrations..."
+if ! npx prisma db push; then
+    log_error "Failed to generate Prisma client"
     exit 1
 fi
 
