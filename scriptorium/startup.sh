@@ -27,9 +27,16 @@ check_and_install() {
     elif [ ! -z "$min_version" ]; then
         # Check version from package.json in node_modules
         local current_version=$(node -p "require('./node_modules/$package_name/package.json').version")
-        if (( $(echo "$current_version < $min_version" | bc -l) )); then
-            log_error "$package_name version $current_version is below required version $min_version"
-            exit 1
+        if [[ "$(printf '%s\n' "$min_version" "$current_version" | sort -V | head -n1)" == "$current_version" ]]; then
+            if [[ "$min_version" != "$current_version" ]]; then
+                log_warn "$package_name version $current_version is below required version $min_version"
+                log_info "Updating $package_name..."
+                if ! npm install "$package_name@$min_version"; then
+                    log_error "Failed to update $package_name to version $min_version"
+                    exit 1
+                fi
+                log_info "Successfully updated $package_name to version $min_version"
+            fi
         fi
     fi
 }
@@ -53,8 +60,22 @@ fi
 if [ -f "package.json" ]; then
     NODE_REQUIRED=$(node -p "require('./package.json').engines?.node?.replace(/[^0-9.]/g, '') || '16.0'")
     NODE_VERSION=$(node -v | cut -d 'v' -f 2)
-    if (( $(echo "$NODE_VERSION < $NODE_REQUIRED" | bc -l) )); then
-        echo -e "${RED}Error: Node.js version must be $NODE_REQUIRED or higher${NC}"
+    
+    # Simple version comparison using bash
+    if [[ "$(printf '%s\n' "$NODE_REQUIRED" "$NODE_VERSION" | sort -V | head -n1)" == "$NODE_VERSION" ]]; then
+        if [[ "$NODE_REQUIRED" != "$NODE_VERSION" ]]; then
+            echo -e "${RED}Error: Node.js version must be $NODE_REQUIRED or higher${NC}"
+            exit 1
+        fi
+    fi
+fi
+
+# Add semver check at the beginning of the script, after the Node/npm checks
+echo "Checking for required packages..."
+if ! npm list semver >/dev/null 2>&1; then
+    log_info "Installing semver package..."
+    if ! npm install semver; then
+        log_error "Failed to install semver"
         exit 1
     fi
 fi
@@ -64,8 +85,10 @@ echo "Installing dependencies..."
 npm install
 
 # Add checks for critical dependencies
-check_and_install "prisma" "@prisma/cli"
-check_and_install "bcrypt" "bcryptjs"
+check_and_install "prisma" "5.21.1"
+check_and_install "@prisma/client" "5.21.1"
+check_and_install "bcryptjs" "2.4.3"
+check_and_install "bcrypt" "5.1.1"
 
 # Check if .env file exists, if not create it
 if [ ! -f .env ]; then
