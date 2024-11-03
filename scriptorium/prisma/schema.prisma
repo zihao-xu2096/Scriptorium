@@ -24,6 +24,9 @@ model User {
   phoneNum  String?   @unique
   createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
   savedTemplates  CodeTemplate[] @relation("SavedTemplates")
+  parent    CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
+  parentId  Int?
+  children  CodeTemplate[] @relation("ForkedTemplates")
   posts     Post[] // One-to-many relation
   comments  Comment[]
   createdAt DateTime @default(now())

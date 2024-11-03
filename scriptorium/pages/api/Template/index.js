@@ -6,7 +6,7 @@ async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       // Validate required fields
-      const { title, explanation, language, code, authorId, tags } = req.body;
+      const { title, explanation, language, code, authorId, tags, parentId } = req.body;
       
       if (!title || !explanation || !language || !code || !authorId) {
         return res.status(400).json({ 
@@ -23,6 +23,13 @@ async function handler(req, res) {
         return res.status(400).json({ error: 'Author not found' });
       }
 
+      // If parentId is provided, verify the template exists
+      if (parentId) {
+        const parentTemplate = await prisma.codeTemplate.findUnique({
+          where: { id: parseInt(parentId) }
+        });
+      }
+
       // Create template with optional tags
       const template = await prisma.codeTemplate.create({
         data: {
@@ -33,6 +40,11 @@ async function handler(req, res) {
           author: {
             connect: { id: authorId }
           },
+          ...(parentId && {
+            parent: {
+              connect: { id: parseInt(parentId) }
+            }
+          }),
           ...(tags && {
             tags: {
               connectOrCreate: tags.map(tagName => ({
@@ -51,11 +63,34 @@ async function handler(req, res) {
               email: true
             }
           },
+          parent: {
+            select: {
+              id: true,
+              title: true,
+              author: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
           tags: true
         }
       });
 
-      res.status(201).json(template);
+      if (parentTemplate) {
+        res.status(201).json({
+          message: `Template successfully forked from "${parentTemplate.title}"`,
+          template
+        });
+      } else {
+        res.status(201).json({
+          message: 'Template successfully created',
+          template
+        });
+      }
 
     } catch (error) {
       console.error('Error creating template:', error);
