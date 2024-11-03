@@ -113,6 +113,12 @@ if ! npx prisma generate; then
     exit 1
 fi
 
+log_info "Pushing database migrations..."
+if ! npx prisma db push; then
+    log_error "Failed to generate Prisma client"
+    exit 1
+fi
+
 # Create admin user
 log_info "Creating admin user..."
 
