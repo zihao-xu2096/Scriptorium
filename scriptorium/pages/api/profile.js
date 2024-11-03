@@ -1,15 +1,15 @@
-import { verifyToken } from '../../utils/auth';
+import { protectedRoute } from '../../middleware/auth';
+import { prisma } from '../../prisma/prisma';
 
 async function handler(req, res) {
     if (req.method === 'GET') {
-        const user = verifyToken(req.headers.authorization)
+        const user = await prisma.user.findUnique({
+            where: {
+                id: req.user.id
+            }
+        })
 
-        if (!user) {
-            return res.status(401).json({
-                message: 'User Unauthorized'
-            })
-        } // TODO: Try to generate new access token???
-
+        // TODO: Consider checking user exists (should exist since logged in)
         return res.status(200).json({
             firstName: user.firstName,
             lastName: user.lastName,
@@ -23,4 +23,4 @@ async function handler(req, res) {
     }
 }
 
-export default handler
+export default protectedRoute(handler)

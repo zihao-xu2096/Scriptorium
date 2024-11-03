@@ -24,7 +24,7 @@ model User {
   phoneNum  String?   @unique
   createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
   savedTemplates  CodeTemplate[] @relation("SavedTemplates")
-  //Posts Post[] // One-to-many relation
+  posts     Post[] // One-to-many relation
   createdAt DateTime @default(now())
   updatedAt       DateTime       @updatedAt
 }
@@ -50,3 +50,55 @@ model Tag {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
+
+
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  createdBy   Int
+  user        User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  title       String    
+  content     String
+  description String?
+  isHidden    Boolean   @default(false)
+  tags        Tag[]
+  //templates   Template[]
+  comments    Comment[]
+  reports     Report[]
+  upvotes     Int
+  downvotes   Int
+}
+
+model Tag {
+  id          Int       @id @default(autoincrement())
+  label       String    @unique
+  posts       Post[]
+}
+
+model Comment {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  content     String
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHidden    Boolean   @default(false)
+  postId      Int
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId    Int?
+  parent      Comment?  @relation("CommentReply", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReply")
+  reports     Report[]
+  upvotes     Int
+  downvotes   Int
+}
+
+model Report {
+  id          Int       @id @default(autoincrement())
+  explanation String
+  postId      Int?
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId   Int?
+  comment     Comment?  @relation(fields: [commentId], references: [id])
+}
+

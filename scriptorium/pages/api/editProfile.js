@@ -1,16 +1,9 @@
-import { verifyToken } from '../../utils/auth';
-
+import { protectedRoute } from '../../middleware/auth';
+import { prisma } from '../../prisma/prisma';
 
 async function handler(req, res) {
     if (req.method === 'PUT') {
-        const user = verifyToken(req.headers.authorization)
-
-        if (!user) {
-            return res.status(401).json({
-                message: 'User Unauthorized'
-            })
-        }
-
+        
         const { firstName, lastName, phoneNum, avatarUrl } = req.body;
         const updateData = {};
 
@@ -21,9 +14,9 @@ async function handler(req, res) {
 
         try {
 
-            const updatedUser = await primsa.user.update({
+            const updatedUser = await prisma.user.update({
                 where: {
-                    id: user.id
+                    id: req.user.id
                 },
                 data: updateData
             })
@@ -34,6 +27,7 @@ async function handler(req, res) {
             })
 
         } catch (error) {
+            console.error(error)
             return res.status(500).json({ message: 'Internal Server Error' });
         }
 
@@ -42,3 +36,5 @@ async function handler(req, res) {
         res.status(405).json({ message: 'Method Not Allowed' });
     }
 }
+
+export default protectedRoute(handler)

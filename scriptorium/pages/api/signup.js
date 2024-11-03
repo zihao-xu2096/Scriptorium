@@ -1,3 +1,5 @@
+import { readdir } from 'fs/promises';
+import path from 'path';
 import { prisma } from '../../prisma/prisma';
 const bcrypt = require('bcrypt');
 
@@ -65,6 +67,11 @@ async function handler(req, res) {
             try {
                 const hashedPassword = await bcrypt.hash(password, 10);
 
+            const avatars = path.join(process.cwd(), 'public', 'avatars');
+            const avatarFiles = await readdir(avatars);
+
+            const randomAvatar = avatarFiles[Math.floor(Math.random() * avatarFiles.length)]; // Could consider change logic to schema @defualt()?? 
+
                 // Create User
                 const user = await prisma.user.create({
                     data: {
@@ -72,7 +79,8 @@ async function handler(req, res) {
                         password: hashedPassword,
                         firstName: firstName,
                         lastName: lastName,
-                        phoneNum: phone
+                        phoneNum: phone,
+                    avatarUrl: `public/avatars/${randomAvatar}`
                     },
                     select: {
                         id: true,
