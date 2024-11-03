@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 
         } catch (error) {
             console.error('Error executing code:', error);
-            return res.status(500).json({ message: 'Internal server error', error: error });
+            return res.status(400).json({ message: 'Code could not compile check for errors.', error: error });
         }
     } else {
         res.status(405).json({ message: 'Method Not Allowed'});
