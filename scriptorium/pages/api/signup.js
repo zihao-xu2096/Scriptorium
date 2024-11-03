@@ -11,6 +11,7 @@ async function validateEmailFormat(email) {
     if (!emailRegex.test(email)) {
         return false
     }
+    return True
 }
 
 async function existingUser(email) {
