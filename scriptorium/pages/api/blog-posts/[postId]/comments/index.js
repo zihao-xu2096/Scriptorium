@@ -86,7 +86,7 @@ async function handler(req, res) {
     }
     
     if (sortBy && !(sortBy === "mostControversial" || sortBy === "mostValued")) {
-      res.status(400).json({ message: "Invalid sort values" });
+      res.status(400).json({ message: "Invalid sort value" });
       return;
     }
 

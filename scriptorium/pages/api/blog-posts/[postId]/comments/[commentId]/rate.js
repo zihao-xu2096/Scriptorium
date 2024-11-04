@@ -4,10 +4,11 @@ import { protectedRoute } from "../../../../../../middleware/auth";
 
 async function handler(req, res) {
   if (req.method === "PUT") {
-    const { commentId: id, ratingType } = req.query;
+    const { commentId: id } = req.query;
+    const { ratingType } = req.body;
 
     if (!id) {
-      res.status(400).json({ message: "id not provided" })
+      res.status(400).json({ message: "ID not provided" })
       return;
     }
 
@@ -32,7 +33,7 @@ async function handler(req, res) {
         data: ratingType === "upvote" 
         ? { upvotes: { increment: 1 } }
         : { downvotes: { increment: 1 } },
-        include: { tags: true }
+        include: { replies: true }
       })
       
       res.status(200).json(comment);
@@ -43,10 +44,7 @@ async function handler(req, res) {
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
-      } else {
-        res.status(500).json({ message: error.message });
-        return;
-      }
+      } 
     }
 
   } else {

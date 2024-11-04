@@ -1,6 +1,6 @@
+import { prisma } from '@/prisma/prisma';
 import { readdir } from 'fs/promises';
 import path from 'path';
-import { prisma } from '@/prisma/prisma';
 const bcrypt = require('bcrypt');
 
 // TODO: Make sure status codes align with message i.e. 404 not found, 400 bad request etc
@@ -62,6 +62,14 @@ async function handler(req, res) {
                     return res.status(400).json({
                         message: "Phone number is already in use."
                     });
+                } else {
+                    // Validate phone number
+                    const phoneRegex = /^\d{10}$/;
+                    if (!phoneRegex.test(phone)) {
+                        return res.status(400).json({
+                            message: "Phone number must be 10 digits."
+                        });
+                    }
                 }
             }
 

@@ -46,6 +46,7 @@ model CodeTemplate {
   tags        TemplateTag[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  posts       Post[]
 }
 
 model TemplateTag {
@@ -57,20 +58,20 @@ model TemplateTag {
 }
 
 model Post {
-  id          Int       @id @default(autoincrement())
-  createdAt   DateTime  @default(now())
-  userId      Int
-  createdBy   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String    
-  content     String
-  description String?
-  isHidden    Boolean   @default(false)
-  tags        PostTag[]
-  //templates   Template[]
-  comments    Comment[]
-  reports     Report[]
-  upvotes     Int       @default(0)
-  downvotes   Int       @default(0)
+  id                Int       @id @default(autoincrement())
+  createdAt         DateTime  @default(now())
+  userId            Int
+  createdBy         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String    
+  content           String
+  description       String?
+  isHidden          Boolean   @default(false)
+  tags              PostTag[]
+  linkedTemplates   CodeTemplate[]
+  comments          Comment[]
+  reports           Report[]
+  upvotes           Int       @default(0)
+  downvotes         Int       @default(0)
 }
 
 model PostTag {

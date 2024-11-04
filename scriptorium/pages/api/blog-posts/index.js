@@ -31,6 +31,11 @@ async function handler(req, res) {
             }
           }
         },
+        include: {
+          tags: {
+            select: { label: true }
+          }
+        }
       })
 
       res.status(201).json(post);
@@ -67,6 +72,13 @@ async function handler(req, res) {
     }
 
     const tagNames = tags?.split(",").map(tag => tag.trim()) || [];
+    const templateIds = templates?.split(",") || [];
+
+    templateIds.map(id => {
+      if (!parseInt(id)) {
+        res.status(400).json({ message: "Invalid sort values" });
+      }
+    })
 
     const posts = await prisma.post.findMany({
       where : {
@@ -87,11 +99,13 @@ async function handler(req, res) {
               }
             }
           } : undefined,
-          /**templates: {
+          templates: templates ? {
             some: {
-
+              title: {
+                in: templates
+              }
             }
-          }**/
+          } : undefined
       }, 
       include: {
         tags: {

@@ -5,7 +5,8 @@ import { protectedRoute } from "../../../../middleware/auth";
 
 async function handler(req, res) {
   if (req.method === "PUT") {
-    const { postId: id, ratingType } = req.query;
+    const { postId: id } = req.query;
+    const { ratingType } = req.body;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
