@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma/prisma';
-import { protectedRoute } from '../../../middleware/auth';
+import { protectedRoute } from '@/middleware/auth';
 
 
 async function handler(req, res) {
