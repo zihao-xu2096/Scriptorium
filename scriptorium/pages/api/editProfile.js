@@ -1,5 +1,5 @@
-import { protectedRoute } from '../../middleware/auth';
 import { prisma } from '@/prisma/prisma';
+import { protectedRoute } from '../../middleware/auth';
 
 async function handler(req, res) {
     if (req.method === 'PUT') {
@@ -9,7 +9,16 @@ async function handler(req, res) {
 
         if (firstName) updateData.firstName = firstName;
         if (lastName) updateData.lastName = lastName;
-        if (phoneNum) updateData.phoneNum = phoneNum;
+        if (phoneNum) {
+            // Validate phone number format
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(phoneNum)) {
+                return res.status(400).json({
+                    message: "Phone number must be 10 digits."
+                });
+            }
+            updateData.phoneNum = phoneNum;
+        }
         if (avatarUrl) updateData.avatarUrl = avatarUrl;
 
         try {
