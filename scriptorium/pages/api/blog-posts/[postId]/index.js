@@ -46,7 +46,7 @@ async function handler(req, res) {
       }
     }
   } else if (req.method === "PUT") {
-    const { title, description, content, tags } = req.body;
+    const { title, description, content, tags, templates } = req.body;
     const { postId: id } = req.query;
 
     if (!id) {
@@ -56,6 +56,11 @@ async function handler(req, res) {
 
     if (!parseInt(id)) {
       res.status(400).json({ message: "Invalid ID type provided" })
+      return;
+    }
+
+    if ((tags && !Array.isArray(tags)) || (templates && !Array.isArray(templates))) {
+      res.status(400).json({ message: "Templates and tags must be arrays" })
       return;
     }
 
@@ -74,22 +79,44 @@ async function handler(req, res) {
               where: { label: tag },
               create: { label: tag }
             })) || []
+          }, 
+          linkedTemplates: {
+            connect: templates?.map((id) => ({
+               id 
+            })) || []
           }
-        }, 
-        include: { tags: true }
+        },
+        include: { 
+          tags: true,
+          linkedTemplates: {
+            select: {
+              id: true
+            }
+          }
+        }
       })
 
       const tagsToDisconnect = post.tags
         .map(tag => tag.label)
-        .filter(tag => !tags.includes(tag));
+        .filter(tag => tags && !tags.includes(tag));
 
-      if (tagsToDisconnect.length > 0) {
+      const templatesToDisconnect = post.linkedTemplates
+        .map(template => template.id)
+        .filter(template => templates && !templates.includes(template));
+
+      if (tagsToDisconnect.length > 0 || templatesToDisconnect.length > 0) {
         post = await prisma.post.update({
           where: { id: parseInt(id) },
           data: {
             tags: {
-              disconnect: tagsToDisconnect?.map(tag => ({
+              disconnect: tagsToDisconnect.map(tag => ({
                 label: tag
+              }))
+            },
+
+            linkedTemplates: {
+              disconnect: templatesToDisconnect.map(id => ({
+                id
               }))
             }
           },
