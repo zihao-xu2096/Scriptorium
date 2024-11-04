@@ -20,12 +20,14 @@ async function handler(req, res) {
       });
 
       if (!authorExists) {
-        return res.status(400).json({ error: 'Author not found' });
+        return res.status(400).json({ error: 'Author ID not found' });
       }
+
+      let parentTemplate = null;
 
       // If parentId is provided, verify the template exists
       if (parentId) {
-        const parentTemplate = await prisma.codeTemplate.findUnique({
+        parentTemplate = await prisma.codeTemplate.findUnique({
           where: { id: parseInt(parentId) }
         });
       }
@@ -40,9 +42,9 @@ async function handler(req, res) {
           author: {
             connect: { id: authorId }
           },
-          ...(parentId && {
+          ...(parentTemplate && {  // Only include parent if parentTemplate exists
             parent: {
-              connect: { id: parseInt(parentId) }
+              connect: { id: parentTemplate.id }
             }
           }),
           ...(tags && {
@@ -82,7 +84,7 @@ async function handler(req, res) {
 
       if (parentTemplate) {
         res.status(201).json({
-          message: `Template successfully forked from "${parentTemplate.title}"`,
+          message: `Template successfully forked from "${parentTemplate.title}".`,
           template
         });
       } else {
