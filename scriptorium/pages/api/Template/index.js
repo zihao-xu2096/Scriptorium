@@ -1,12 +1,12 @@
 import { prisma } from '@/prisma/prisma';
-import { protectedRoute } from '../../../middleware/auth';
+import { protectedRoute } from '@/middleware/auth';
 
 
 async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       // Validate required fields
-      const { title, explanation, language, code, authorId, tags } = req.body;
+      const { title, explanation, language, code, authorId, tags, parentId } = req.body;
       
       if (!title || !explanation || !language || !code || !authorId) {
         return res.status(400).json({ 
@@ -20,7 +20,16 @@ async function handler(req, res) {
       });
 
       if (!authorExists) {
-        return res.status(400).json({ error: 'Author not found' });
+        return res.status(400).json({ error: 'Author ID not found' });
+      }
+
+      let parentTemplate = null;
+
+      // If parentId is provided, verify the template exists
+      if (parentId) {
+        parentTemplate = await prisma.codeTemplate.findUnique({
+          where: { id: parseInt(parentId) }
+        });
       }
 
       // Create template with optional tags
@@ -33,6 +42,11 @@ async function handler(req, res) {
           author: {
             connect: { id: authorId }
           },
+          ...(parentTemplate && {  // Only include parent if parentTemplate exists
+            parent: {
+              connect: { id: parentTemplate.id }
+            }
+          }),
           ...(tags && {
             tags: {
               connectOrCreate: tags.map(tagName => ({
@@ -51,11 +65,34 @@ async function handler(req, res) {
               email: true
             }
           },
+          parent: {
+            select: {
+              id: true,
+              title: true,
+              author: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true
+                }
+              }
+            }
+          },
           tags: true
         }
       });
 
-      res.status(201).json(template);
+      if (parentTemplate) {
+        res.status(201).json({
+          message: `Template successfully forked from "${parentTemplate.title}".`,
+          template
+        });
+      } else {
+        res.status(201).json({
+          message: 'Template successfully created',
+          template
+        });
+      }
 
     } catch (error) {
       console.error('Error creating template:', error);

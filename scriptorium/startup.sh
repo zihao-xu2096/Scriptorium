@@ -70,16 +70,6 @@ if [ -f "package.json" ]; then
     fi
 fi
 
-# Add semver check at the beginning of the script, after the Node/npm checks
-echo "Checking for required packages..."
-if ! npm list semver >/dev/null 2>&1; then
-    log_info "Installing semver package..."
-    if ! npm install semver; then
-        log_error "Failed to install semver"
-        exit 1
-    fi
-fi
-
 # Install dependencies
 echo "Installing dependencies..."
 npm install
