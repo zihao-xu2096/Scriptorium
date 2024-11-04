@@ -35,6 +35,15 @@ async function handler(req, res) {
       });
     }
 
+    // Add template existence check
+    const existingTemplate = await prisma.codeTemplate.findUnique({
+      where: { id: templateId },
+    });
+
+    if (!existingTemplate) {
+      return res.status(404).json({ error: "Template not found" });
+    }
+
     try {
       const updatedTemplate = await prisma.codeTemplate.update({
         where: { id: templateId },
@@ -73,9 +82,7 @@ async function handler(req, res) {
       return res.json(updatedTemplate);
     } catch (error) {
       console.error("Template update error:", error);
-      return res
-        .status(404)
-        .json({ error: "Template not found or update failed" });
+      return res.status(500).json({ error: "Update failed" });
     }
   } 
   
