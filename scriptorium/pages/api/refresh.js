@@ -22,7 +22,7 @@ async function handler(req, res) {
 
         return res.status(200).json({
             message: 'Access Token Refreshed',
-            token: newAccessToken
+            accessToken: newAccessToken
         })
 
     }

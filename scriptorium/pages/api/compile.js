@@ -2,6 +2,7 @@
 import { exec } from 'child_process';
 import { unlink, writeFile } from 'fs/promises';
 import os from 'os';
+import path from 'path';
 
 const languages = {
     'c': {
@@ -37,33 +38,41 @@ export default async function handler(req, res) {
             return res.status(400).json({ message: 'Language not supported right now.' });
         }
 
-        const { fileType, exec, compile} = languages[language];
-        const fileName = `temp.${fileType}`;
+        const { fileType, exec, compile } = languages[language];
+        const className = language === 'java' ? 'Main' : 'temp';
+        const fileName = `${className}.${fileType}`;
         const tempDir = os.tmpdir();
-        console.log(tempDir)
-        const filePath = `${tempDir}/${fileName}`;
+        const filePath = path.join(tempDir, fileName);
 
         try {
-
             await writeFile(filePath, code);
 
             if (compile) { // Requires compiling
-                await execPromise(`${compile} ${filePath}`, stdin); // Compile code
+                await execPromise(`${compile} ${filePath}`); // Compile code
             }
 
-            const output = await execPromise(`${exec} ${filePath}`, stdin); // Async call to execute code
+            let execCommand = `${exec} ${filePath}`;
+            if (language === 'java') {
+                execCommand = `${exec} -cp ${tempDir} ${className}`;
+            }
+
+            const output = await execPromise(execCommand, stdin); // Async call to execute code
 
             await unlink(filePath); // Removes file
+            if (language === 'java') {
+                await unlink(path.join(tempDir, `${className}.class`)); // Remove the .class file
+            }
 
             return res.status(200).json({ 
-                output: output });
+                output: output 
+            });
 
         } catch (error) {
             console.error('Error executing code:', error);
             return res.status(400).json({ message: 'Code could not compile check for errors.', error: error });
         }
     } else {
-        res.status(405).json({ message: 'Method Not Allowed'});
+        res.status(405).json({ message: 'Method Not Allowed' });
     }
 }
 
