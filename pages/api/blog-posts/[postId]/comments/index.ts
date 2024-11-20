@@ -1,13 +1,32 @@
 import { prisma } from '@/prisma/prisma';
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { protectedRoute } from "../../../../../middleware/auth";
+import { protectedRoute } from "@/middleware/auth";
+import { ApiError, ExtendedRequest } from '@/new-types';
+import { NextApiResponse } from 'next';
+import { Comment } from '@prisma/client';
 
-async function handler(req, res) {
+type BlogPostQuery = {
+  postId?: string
+}
+
+type CreateCommentBody = {
+  content: string
+  parent?: string
+}
+
+type GetBlogPostsQuery = {
+  page?: string | number
+  limit?: string | number
+  sortBy?: string
+}
+
+
+async function handler(req: ExtendedRequest, res: NextApiResponse<Comment | Comment[] | ApiError>) {
   if (req.method === "POST") {
     //creating a comment
-    const { content, parent } = req.body;
-    const { postId } = req.query;
+    const { content, parent }: CreateCommentBody = req.body;
+    const { postId }: BlogPostQuery = req.query;
 
     if (!postId) {
       res.status(400).json({ message: "Blog ID not provided" })
@@ -44,7 +63,7 @@ async function handler(req, res) {
           } : undefined,
           createdBy: {
             connect: {
-              id: req.user.id
+              id: req.user?.id
             }
           }
         }, 
@@ -62,14 +81,12 @@ async function handler(req, res) {
           res.status(404).json({ message: 'Post, user or parent comment not found' });
           return;
         }
-        res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
+        res.status(400).json({ message: `error ${error.code}: ${error.message}` });
+        return;
       } 
-      else {
-        res.status(500).json({message: error.message});
-      }
     }
   } else if (req.method === "GET") {
-    const { postId, page = 1, limit = 10, sortBy } = req.query;
+    const { postId, page = 1, limit = 10, sortBy }: BlogPostQuery & GetBlogPostsQuery = req.query;
     
     if (!postId) {
       res.status(400).json({ message: "Blog ID not provided" })
@@ -81,7 +98,7 @@ async function handler(req, res) {
       return;
     }
 
-    if (!parseInt(page) || !parseInt(limit)) {
+    if (typeof(page) === "string" && !parseInt(page) || typeof(limit) === "string" && !parseInt(limit)) {
       res.status(400).json({ message: "Invalid page and limit values" })
     }
     
@@ -90,6 +107,9 @@ async function handler(req, res) {
       return;
     }
 
+    const pageInt = typeof(page) === "string" ? parseInt(page) : page;
+    const limitInt = typeof(limit) === "string" ? parseInt(limit) : limit;
+
     const comments = await prisma.comment.findMany({
       where : {
         OR: [
@@ -97,9 +117,7 @@ async function handler(req, res) {
           req.user ? { userId: req.user.id } : undefined
         ].filter(value => !!value), 
         postId: parseInt(postId), 
-        replies: {
-          some: {}
-        }
+        parent: null
       }, 
       include: {
         replies: true
@@ -109,8 +127,8 @@ async function handler(req, res) {
       : sortBy === "mostValued" ? { upvotes: 'desc' } 
       : { createdAt: 'desc' }
       ,
-      skip: parseInt(page - 1) * limit,
-      take: parseInt(limit)
+      skip: (pageInt - 1) * limitInt,
+      take: limitInt
     });
 
     res.status(200).json(comments);

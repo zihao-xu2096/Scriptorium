@@ -1,24 +1,30 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
-import { protectedRoute } from "../../../../../../middleware/auth";
+import { protectedRoute } from "@/middleware/auth";
+import { ExtendedRequest } from "@/new-types";
+import { NextApiResponse } from "next";
 
-async function handler(req, res) {
+type CommentQuery = {
+  postId?: string
+  commentId?: string
+}
+
+async function handler(req: ExtendedRequest, res: NextApiResponse) {
   if (req.method === "PUT") {
-    const { commentId: id } = req.query;
-    const { ratingType } = req.body;
+    const { commentId: id, postId }: CommentQuery = req.query;
 
-    if (!id) {
-      res.status(400).json({ message: "ID not provided" })
+    if (!id || !postId) {
+      res.status(400).json({ message: "id not provided" })
       return;
     }
 
-    if (!parseInt(id)) {
+    if (!parseInt(id) || !parseInt(postId)) {
       res.status(400).json({ message: "Invalid ID type provided" })
       return;
     }
 
-    if (!ratingType || (ratingType !== "upvote" && ratingType !== "downvote")) {
-      res.status(400).json({ message: "Invalid rating type provided" })
+    if (req.user?.userType !== "ADMIN") {
+      res.status(403).json({ message: "Insufficient permissions" });
       return;
     }
 
@@ -26,14 +32,13 @@ async function handler(req, res) {
       let comment = await prisma.comment.update({
         where: {
           id: parseInt(id),
-          createdBy: {
-            id: req.user.id
+          post: {
+            id: parseInt(postId)
           }
         }, 
-        data: ratingType === "upvote" 
-        ? { upvotes: { increment: 1 } }
-        : { downvotes: { increment: 1 } },
-        include: { replies: true }
+        data: {
+          isHidden: true
+        }
       })
       
       res.status(200).json(comment);
@@ -44,7 +49,7 @@ async function handler(req, res) {
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
-      } 
+      }
     }
 
   } else {

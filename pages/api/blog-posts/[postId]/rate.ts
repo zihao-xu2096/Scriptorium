@@ -1,11 +1,19 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
 
-import { protectedRoute } from "../../../../middleware/auth";
+import { protectedRoute } from "@/middleware/auth";
+import { ApiError, ExtendedRequest } from "@/new-types";
+import { NextApiResponse } from "next";
+import { Post } from "@prisma/client";
 
-async function handler(req, res) {
+type RateBlogPostQuery = {
+  postId?: string
+}
+
+async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiError>) {
   if (req.method === "PUT") {
-    const { postId: id } = req.query;
+    const { postId: id }: RateBlogPostQuery = req.query;
+    const { ratingType } = req.body;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
@@ -17,19 +25,22 @@ async function handler(req, res) {
       return;
     }
 
-    if (req.user.userType !== "ADMIN") {
-      res.status(403).json({ message: "Insufficient permissions" });
+    if (!ratingType || (ratingType !== "upvote" && ratingType !== "downvote")) {
+      res.status(400).json({ message: "Invalid rating type provided" })
       return;
     }
 
     try {
       let post = await prisma.post.update({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          createdBy: {
+            id: req.user?.id
+          }
         }, 
-        data: {
-          isHidden: true
-        },
+        data: ratingType === "upvote" 
+        ? { upvotes: { increment: 1 } }
+        : { downvotes: { increment: 1 } },
         include: { tags: true }
       })
       
@@ -37,14 +48,11 @@ async function handler(req, res) {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {
-          return res.status(404).json({ error: 'Post not found.' });
+          return res.status(404).json({ message: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
-      } else {
-        res.status(500).json({ message: error.message });
-        return;
-      }
+      } 
     }
 
   } else {

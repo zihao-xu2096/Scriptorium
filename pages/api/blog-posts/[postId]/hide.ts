@@ -1,10 +1,19 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
-import { protectedRoute } from "../../../../../../middleware/auth";
 
-async function handler(req, res) {
+import { protectedRoute } from "@/middleware/auth";
+import { ApiError, ExtendedRequest } from "@/new-types";
+import { NextApiResponse } from "next";
+import { Post } from "@prisma/client";
+
+type GetBlogPostQuery = {
+  postId?: string
+}
+
+
+async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiError>) {
   if (req.method === "PUT") {
-    const { commentId: id } = req.query;
+    const { postId: id }: GetBlogPostQuery = req.query;
 
     if (!id) {
       res.status(400).json({ message: "id not provided" })
@@ -16,13 +25,13 @@ async function handler(req, res) {
       return;
     }
 
-    if (req.user.userType !== "ADMIN") {
+    if (req.user?.userType !== "ADMIN") {
       res.status(403).json({ message: "Insufficient permissions" });
       return;
     }
 
     try {
-      let comment = await prisma.comment.update({
+      let post = await prisma.post.update({
         where: {
           id: parseInt(id)
         }, 
@@ -32,16 +41,13 @@ async function handler(req, res) {
         include: { tags: true }
       })
       
-      res.status(200).json(comment);
+      res.status(200).json(post);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {
-          return res.status(404).json({ error: 'Comment not found.' });
+          return res.status(404).json({ message: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
-        return;
-      } else {
-        res.status(500).json({ message: error.message });
         return;
       }
     }

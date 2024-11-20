@@ -16,6 +16,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "prisma/prisma.js", "pages/api/signup.js", "pages/api/login.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "prisma/prisma.ts", "pages/api/signup.js", "pages/api/login.js"],
   "exclude": ["node_modules"]
 }

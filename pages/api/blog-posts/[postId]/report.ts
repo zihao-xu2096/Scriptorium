@@ -1,12 +1,19 @@
 import { prisma } from '@/prisma/prisma';
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { protectedRoute } from "../../../../middleware/auth";
+import { protectedRoute } from "@/middleware/auth";
+import { ApiError, ExtendedRequest } from '@/new-types';
+import { NextApiResponse } from 'next';
+import { Report } from '@prisma/client';
 
-async function handler(req, res) {
+type ReportBlogPostsQuery = {
+  postId?: string
+}
+
+async function handler(req: ExtendedRequest, res: NextApiResponse<Report | ApiError>) {
   if (req.method === "POST") {
     //creating a report
-    const { postId: id } = req.query;
+    const { postId: id }: ReportBlogPostsQuery = req.query;
     const { explanation } = req.body;
 
     if (!id) {
@@ -30,14 +37,14 @@ async function handler(req, res) {
           explanation,
           createdBy: {
             connect: {
-              id: req.user.id
+              id: req.user?.id
             }
           },
           post: {
             connect: {
               id: parseInt(id)
             }
-          }
+          }, 
         }
       })
 
@@ -50,11 +57,9 @@ async function handler(req, res) {
           res.status(400).json({ message: 'Post or user not found' });
           return;
         }
-        res.status(400).json({message: `threw a ${error.code} instead. ${error.message}`})
+        res.status(400).json({ message: `error ${error.code}: ${error.message}` });
+        return;
       } 
-      else {
-        res.status(500).json({message: error.message});
-      }
     }
   } else {
     res.status(405).json({ message: "Method not allowed" });

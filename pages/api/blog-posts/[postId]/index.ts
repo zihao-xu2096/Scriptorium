@@ -1,11 +1,27 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
 
-import { protectedRoute } from "../../../../middleware/auth";
+import { protectedRoute } from "@/middleware/auth";
+import { ApiError, ExtendedRequest } from "@/new-types";
+import { NextApiResponse } from "next";
+import { Post } from "@prisma/client";
 
-async function handler(req, res) {
+type GetBlogPostQuery = {
+  postId?: string
+}
+
+type UpdateBlogPostBody = {
+  title?: string
+  description?: string
+  content?: string
+  tags?: string[]
+  templates?: string[]
+}
+
+
+async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiError>) {
   if (req.method === "GET") { 
-    const { postId: id } = req.query;
+    const { postId: id }: GetBlogPostQuery = req.query;
 
     if (!id) {
       res.status(400).json({ message: "ID not provided" })
@@ -29,14 +45,15 @@ async function handler(req, res) {
       });
 
       if (!post) {
-        return res.status(404).json({ error: 'Post not found.' });
+        return res.status(404).json({ message: 'Post not found.' });
+      } else {
+        res.status(200).json(post);
       }
 
-      res.status(200).json({post});
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          return res.status(404).json({ error: 'Post not found.' });
+          return res.status(404).json({ message: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
@@ -46,8 +63,8 @@ async function handler(req, res) {
       }
     }
   } else if (req.method === "PUT") {
-    const { title, description, content, tags, templates } = req.body;
-    const { postId: id } = req.query;
+    const { title, description, content, tags, templates }: UpdateBlogPostBody = req.body;
+    const { postId: id }: GetBlogPostQuery = req.query;
 
     if (!id) {
       res.status(400).json({ message: "ID not provided" })
@@ -59,35 +76,34 @@ async function handler(req, res) {
       return;
     }
 
-    if ((tags && !Array.isArray(tags)) || (templates && !Array.isArray(templates))) {
-      res.status(400).json({ message: "Templates and tags must be arrays" })
-      return;
-    }
-
     try {
       let post = await prisma.post.update({
         where: {
           id: parseInt(id),
-          userId: req.user.id
+          userId: req.user?.id
         }, 
         data: {
           title,
           description,
           content,
           tags: {
-            connectOrCreate: tags?.map((tag) => ({
+            connectOrCreate: tags?.map((tag: string) => ({
               where: { label: tag },
               create: { label: tag }
             })) || []
           }, 
           linkedTemplates: {
-            connect: templates?.map((id) => ({
-               id 
+            connect: templates?.map((id: string) => ({
+               id: parseInt(id) 
             })) || []
           }
         },
         include: { 
-          tags: true,
+          tags: {
+            select: {
+              label: true
+            }
+          },
           linkedTemplates: {
             select: {
               id: true
@@ -102,7 +118,7 @@ async function handler(req, res) {
 
       const templatesToDisconnect = post.linkedTemplates
         .map(template => template.id)
-        .filter(template => templates && !templates.includes(template));
+        .filter(template => templates && !templates.map(id => parseInt(id)).includes(template));
 
       if (tagsToDisconnect.length > 0 || templatesToDisconnect.length > 0) {
         post = await prisma.post.update({
@@ -120,7 +136,18 @@ async function handler(req, res) {
               }))
             }
           },
-          include: { tags: true }
+          include: { 
+            tags: {
+              select: {
+                label: true
+              }
+            },
+            linkedTemplates: {
+              select: {
+                id: true
+              }
+            }
+          }
         })
       }
 
@@ -128,18 +155,15 @@ async function handler(req, res) {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {
-          return res.status(404).json({ error: 'Post not found.' });
+          return res.status(404).json({ message: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
-      } else {
-        res.status(500).json({ message: error.message });
-        return;
-      }
+      } 
     }
 
   } else if (req.method === "DELETE") {
-    const { postId: id } = req.query;
+    const { postId: id }: GetBlogPostQuery = req.query;
 
     if (!id) {
       res.status(400).json({ message: "ID not provided" })
@@ -155,7 +179,7 @@ async function handler(req, res) {
       const deletePost = await prisma.post.delete({
         where: {
           id: parseInt(id),
-          userId: req.user.id
+          userId: req.user?.id
         }
       });
 
@@ -163,7 +187,7 @@ async function handler(req, res) {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          return res.status(404).json({ error: 'Post not found.' });
+          return res.status(404).json({ message: 'Post not found.' });
         }
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
