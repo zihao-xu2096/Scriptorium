@@ -2,7 +2,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
 
 import { protectedRoute } from "@/middleware/auth";
-import { ApiError, ExtendedRequest } from "@/new-types";
+import { ApiError, ExtendedRequest, isExtended } from "@/new-types";
 import { NextApiResponse } from "next";
 import { Post } from "@prisma/client";
 
@@ -25,7 +25,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
       return;
     }
 
-    if (req.user?.userType !== "ADMIN") {
+    if (req.user.userType !== "ADMIN") {
       res.status(403).json({ message: "Insufficient permissions" });
       return;
     }

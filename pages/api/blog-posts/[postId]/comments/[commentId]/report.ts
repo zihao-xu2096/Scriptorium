@@ -1,7 +1,7 @@
 import { prisma } from '@/prisma/prisma';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { protectedRoute } from "@/middleware/auth";
-import { ApiError, ExtendedRequest } from '@/new-types';
+import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { NextApiResponse } from 'next';
 import { Report } from '@prisma/client';
 

@@ -2,8 +2,8 @@ import { prisma } from '@/prisma/prisma';
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { protectedRoute } from "@/middleware/auth";
-import { NextApiResponse } from 'next';
-import { ApiError, ExtendedRequest } from '@/new-types';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { Post } from '@prisma/client';
 
 type CreateBlogPostsBody = {
@@ -14,16 +14,21 @@ type CreateBlogPostsBody = {
 
 type BlogPostsQuery = {
   title?: string
-  tags?: string[]
+  tags?: string
   content?: string
-  templates?: string[]
+  templates?: string
   page?: string | number
   limit?: string | number
   sortBy?: string
 }
 
-async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiError | Post[]>) {
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError | Post[]>) {
   if (req.method === "POST") {
+    if (!isExtended(req)) {
+      res.status(401).json({ message: "No user found" });
+      return;
+    } 
+
     const { title, description, tags }: CreateBlogPostsBody = req.body;
 
     if (!title) {
@@ -45,7 +50,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
           },
           createdBy: {
             connect: {
-              id: req.user?.id
+              id: req.user.id
             }
           }
         },
@@ -82,23 +87,26 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
       return;
     }
 
-    const tagNames = tags?.map(tag => tag.trim()) || [];
-    const templateIds = templates || [];
+    const tagNames = tags?.split(',').map(tag => tag.trim()) || [];
+    const templateIdStrings = templates?.split(",") || [];
     const pageInt = typeof(page) === "string" ? parseInt(page) : page;
     const limitInt = typeof(limit) === "string" ? parseInt(limit) : limit;
 
-    templateIds.map(id => {
+    templateIdStrings.map(id => {
       if (!parseInt(id)) {
-        res.status(400).json({ message: "Invalid template ID values" });
+        res.status(400).json({ message: "Invalid template ID value" });
       }
     })
 
+    const templateIds = templateIdStrings.map(id => parseInt(id))
+
     const posts = await prisma.post.findMany({
       where : {
-          OR: [
+          ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+          {OR: [
             { isHidden: false }, 
-            req.user ? { userId: req.user.id } : undefined
-          ].filter(value => !!value), 
+            isExtended(req) ? { userId: req.user.id } : undefined
+          ].filter(value => !!value)} : {}), 
           title: title ? {
             contains: title
           } : undefined, 
@@ -114,8 +122,8 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
           } : undefined,
           linkedTemplates: templates ? {
             some: {
-              title: {
-                in: templates
+              id: {
+                in: templateIds
               }
             }
           } : undefined
@@ -132,7 +140,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
       : sortBy === "mostValued" ? { upvotes: 'desc' } 
       : { createdAt: 'desc' }
       ,
-      skip: pageInt * limitInt,
+      skip: (pageInt - 1) * limitInt,
       take: limitInt
     });
 

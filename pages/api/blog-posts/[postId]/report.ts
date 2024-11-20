@@ -37,7 +37,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Report | ApiEr
           explanation,
           createdBy: {
             connect: {
-              id: req.user?.id
+              id: req.user.id
             }
           },
           post: {

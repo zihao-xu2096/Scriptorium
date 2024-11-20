@@ -31,20 +31,112 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
     }
 
     try {
-      let post = await prisma.post.update({
+      const voteList = await prisma.postVote.findMany({
         where: {
-          id: parseInt(id),
-          createdBy: {
-            id: req.user?.id
+          post: {
+            id: parseInt(id)
+          },
+          user: {
+            id: req.user.id
           }
-        }, 
-        data: ratingType === "upvote" 
-        ? { upvotes: { increment: 1 } }
-        : { downvotes: { increment: 1 } },
-        include: { tags: true }
+        }
       })
-      
-      res.status(200).json(post);
+
+      if (voteList.length > 1) {
+        res.status(500).json({ message: "Unique constraint violation" })
+      }
+
+      const vote = voteList[0];
+
+      if (vote) {
+        if (vote.voteType === ratingType) {
+          await prisma.postVote.deleteMany({
+            where: {
+              post: {
+                id: parseInt(id)
+              },
+              user: {
+                id: req.user.id
+              }
+            }
+          })
+
+          const post = await prisma.post.update({
+            where: {
+              id: parseInt(id)
+            },
+            data: {
+              [ratingType === "upvote" ? "upvotes" : "downvotes"]: {
+                decrement: 1
+              }
+            }
+          })
+
+        res.status(200).json(post)
+        return;
+        } else {
+          await prisma.postVote.updateMany({
+            where: {
+              post: {
+                id: parseInt(id)
+              },
+              user: {
+                id: req.user.id
+              }
+            }, 
+            data: {
+              voteType: ratingType
+            }
+          })
+
+          const post = await prisma.post.update({
+            where: {
+              id: parseInt(id)
+            },
+            data: {
+              [ratingType === "upvote" ? "upvotes" : "downvotes"]: {
+                increment: 1
+              }, 
+              [ratingType === "upvote" ? "downvotes" : "upvotes"]: {
+                decrement: 1
+              }
+            }
+          })
+
+        res.status(200).json(post)
+        return;
+        }
+      } else {
+        await prisma.postVote.create({
+          data: {
+            user: {
+              connect: {
+                id: req.user.id
+              }
+            }, 
+            post: {
+              connect: {
+                id: parseInt(id)
+              }
+            }, 
+            voteType: ratingType
+          }
+        })
+
+        const post = await prisma.post.update({
+          where: {
+            id: parseInt(id)
+          },
+          data: {
+            [ratingType === "upvote" ? "upvotes" : "downvotes"]: {
+              increment: 1
+            }
+          }
+        })
+
+        res.status(200).json(post)
+        return;
+      }
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {

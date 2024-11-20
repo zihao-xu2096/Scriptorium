@@ -2,8 +2,8 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
 
 import { protectedRoute } from "@/middleware/auth";
-import { ApiError, ExtendedRequest } from "@/new-types";
-import { NextApiResponse } from "next";
+import { ApiError, ExtendedRequest, isExtended } from "@/new-types";
+import { NextApiRequest, NextApiResponse } from "next";
 import { Post } from "@prisma/client";
 
 type GetBlogPostQuery = {
@@ -15,11 +15,11 @@ type UpdateBlogPostBody = {
   description?: string
   content?: string
   tags?: string[]
-  templates?: string[]
+  templates?: number[]
 }
 
 
-async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiError>) {
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError>) {
   if (req.method === "GET") { 
     const { postId: id }: GetBlogPostQuery = req.query;
 
@@ -37,10 +37,11 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
       const post = await prisma.post.findUnique({
         where: {
           id: parseInt(id),
-          OR: [
+          ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+          {OR: [
             { isHidden: false }, 
-            req.user ? { userId: req.user.id } : undefined
-          ].filter(value => !!value)
+            isExtended(req) ? { userId: req.user.id } : undefined
+          ].filter(value => !!value)} : {}), 
         }
       });
 
@@ -66,6 +67,11 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
     const { title, description, content, tags, templates }: UpdateBlogPostBody = req.body;
     const { postId: id }: GetBlogPostQuery = req.query;
 
+    if (!isExtended(req)) {
+      res.status(401).json({ message: "No user found" });
+      return;
+    } 
+
     if (!id) {
       res.status(400).json({ message: "ID not provided" })
       return;
@@ -76,11 +82,21 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
       return;
     }
 
+    let filteredTemplates = templates;
+
+    if (templates) {
+      let allTemplates = await prisma.codeTemplate.findMany();
+      
+      filteredTemplates = templates.filter((id) => {
+        allTemplates.map(template => template.id).includes(id)
+      })
+    }
+
     try {
       let post = await prisma.post.update({
         where: {
           id: parseInt(id),
-          userId: req.user?.id
+          userId: req.user.id
         }, 
         data: {
           title,
@@ -93,8 +109,8 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
             })) || []
           }, 
           linkedTemplates: {
-            connect: templates?.map((id: string) => ({
-               id: parseInt(id) 
+            connect: filteredTemplates?.map((id: number) => ({
+               id 
             })) || []
           }
         },
@@ -118,11 +134,14 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
 
       const templatesToDisconnect = post.linkedTemplates
         .map(template => template.id)
-        .filter(template => templates && !templates.map(id => parseInt(id)).includes(template));
+        .filter(template => templates && !templates.includes(template));
 
       if (tagsToDisconnect.length > 0 || templatesToDisconnect.length > 0) {
         post = await prisma.post.update({
-          where: { id: parseInt(id) },
+          where: { 
+            id: parseInt(id),
+            userId: req.user.id
+          },
           data: {
             tags: {
               disconnect: tagsToDisconnect.map(tag => ({
@@ -164,6 +183,11 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Post | ApiErro
 
   } else if (req.method === "DELETE") {
     const { postId: id }: GetBlogPostQuery = req.query;
+
+    if (!isExtended(req)) {
+      res.status(401).json({ message: "No user found" });
+      return;
+    } 
 
     if (!id) {
       res.status(400).json({ message: "ID not provided" })

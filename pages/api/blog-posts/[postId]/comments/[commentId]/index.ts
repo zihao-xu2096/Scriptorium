@@ -1,15 +1,15 @@
-import { ApiError, ExtendedRequest } from '@/new-types';
+import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { prisma } from '@/prisma/prisma';
 import { Comment } from '@prisma/client';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 type CommentQuery = {
   postId?: string
   commentId?: string
 }
 
-export default async function handler(req: ExtendedRequest, res: NextApiResponse<Comment | ApiError>) {
+export default async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | ApiError>) {
   if (req.method === "GET") { 
     const { commentId: id, postId }: CommentQuery = req.query;
 
@@ -30,10 +30,11 @@ export default async function handler(req: ExtendedRequest, res: NextApiResponse
           post: {
             id: parseInt(postId)
           },
-          OR: [
+          ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+          {OR: [
             { isHidden: false }, 
-            req.user ? { userId: req.user.id } : undefined
-          ].filter(value => !!value)
+            isExtended(req) ? { userId: req.user.id } : undefined
+          ].filter(value => !!value)} : {}), 
         }
       });
 
@@ -58,6 +59,11 @@ export default async function handler(req: ExtendedRequest, res: NextApiResponse
   } else if (req.method === "DELETE") {
     const { commentId: id }: CommentQuery = req.query;
 
+    if (!isExtended(req)) {
+      res.status(401).json({ message: "No user found" });
+      return;
+    } 
+
     if (!id) {
       res.status(400).json({ message: "id not provided" });
       return;
@@ -71,7 +77,10 @@ export default async function handler(req: ExtendedRequest, res: NextApiResponse
     try {
       await prisma.comment.delete({
         where: {
-          id: parseInt(id)
+          id: parseInt(id),
+          createdBy: {
+            id: req.user.id
+          }
         }
       });
 

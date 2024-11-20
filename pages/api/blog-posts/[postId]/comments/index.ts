@@ -2,8 +2,8 @@ import { prisma } from '@/prisma/prisma';
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { protectedRoute } from "@/middleware/auth";
-import { ApiError, ExtendedRequest } from '@/new-types';
-import { NextApiResponse } from 'next';
+import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { Comment } from '@prisma/client';
 
 type BlogPostQuery = {
@@ -22,11 +22,16 @@ type GetBlogPostsQuery = {
 }
 
 
-async function handler(req: ExtendedRequest, res: NextApiResponse<Comment | Comment[] | ApiError>) {
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | Comment[] | ApiError>) {
   if (req.method === "POST") {
     //creating a comment
     const { content, parent }: CreateCommentBody = req.body;
     const { postId }: BlogPostQuery = req.query;
+
+    if (!isExtended(req)) {
+      res.status(401).json({ message: "No user found" });
+      return;
+    } 
 
     if (!postId) {
       res.status(400).json({ message: "Blog ID not provided" })
@@ -53,8 +58,6 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Comment | Comm
         data: {
           content,
           createdAt: new Date(Date.now()),
-          upvotes: 0,
-          downvotes: 0,
           post: {
             connect: { id: parseInt(postId) }
           }, 
@@ -112,10 +115,11 @@ async function handler(req: ExtendedRequest, res: NextApiResponse<Comment | Comm
 
     const comments = await prisma.comment.findMany({
       where : {
-        OR: [
+        ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+        {OR: [
           { isHidden: false }, 
-          req.user ? { userId: req.user.id } : undefined
-        ].filter(value => !!value), 
+          isExtended(req) ? { userId: req.user.id } : undefined
+        ].filter(value => !!value)} : {}), 
         postId: parseInt(postId), 
         parent: null
       }, 
