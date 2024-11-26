@@ -14,40 +14,40 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement()) // Primary key
-  userType          String   @default("USER")
-  email             String   @unique
-  password          String
-  firstName         String
-  lastName          String
-  avatarUrl         String? // URL of Avatar image
-  phoneNum          String?   @unique
-  createdTemplates  CodeTemplate[] @relation("AuthoredTemplates")
-  savedTemplates    CodeTemplate[] @relation("SavedTemplates")
-  posts             Post[] // One-to-many relation
-  comments          Comment[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime       @updatedAt
-  reports           Report[]
-  commentVotes      CommentVote[]
-  postVotes         PostVote[]
+  id               Int            @id @default(autoincrement()) // Primary key
+  userType         String         @default("USER")
+  email            String         @unique
+  password         String
+  firstName        String
+  lastName         String
+  avatarUrl        String? // URL of Avatar image
+  phoneNum         String         @unique
+  createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
+  savedTemplates   CodeTemplate[] @relation("SavedTemplates")
+  posts            Post[] // One-to-many relation
+  comments         Comment[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  reports          Report[]
+  commentVotes     CommentVote[]
+  postVotes        PostVote[]
 }
 
 model CodeTemplate {
-  id          Int           @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
   explanation String
   language    String
   code        String
   authorId    Int
-  author      User          @relation("AuthoredTemplates", fields: [authorId], references: [id])
-  savedBy     User[]        @relation("SavedTemplates")
-  parent    CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
-  parentId  Int?
-  children  CodeTemplate[] @relation("ForkedTemplates")
+  author      User           @relation("AuthoredTemplates", fields: [authorId], references: [id])
+  savedBy     User[]         @relation("SavedTemplates")
+  parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
+  parentId    Int?
+  children    CodeTemplate[] @relation("ForkedTemplates")
   tags        TemplateTag[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   posts       Post[]
 }
 
@@ -60,77 +60,76 @@ model TemplateTag {
 }
 
 model Post {
-  id                Int       @id @default(autoincrement())
-  createdAt         DateTime  @default(now())
-  userId            Int
-  createdBy         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title             String    
-  content           String
-  description       String?
-  isHidden          Boolean   @default(false)
-  tags              PostTag[]
-  linkedTemplates   CodeTemplate[]
-  comments          Comment[]
-  reports           Report[]
-  votes             PostVote[]    
-  upvotes           Int        @default(0)
-  downvotes         Int        @default(0)
+  id              Int            @id @default(autoincrement())
+  createdAt       DateTime       @default(now())
+  userId          Int
+  createdBy       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  content         String
+  description     String?
+  isHidden        Boolean        @default(false)
+  tags            PostTag[]
+  linkedTemplates CodeTemplate[]
+  comments        Comment[]
+  reports         Report[]
+  votes           PostVote[]
+  upvotes         Int            @default(0)
+  downvotes       Int            @default(0)
 }
 
 model PostTag {
-  id          Int       @id @default(autoincrement())
-  label       String    @unique
-  posts       Post[]
+  id    Int    @id @default(autoincrement())
+  label String @unique
+  posts Post[]
 }
 
 model PostVote {
-  id          Int       @id @default(autoincrement())
-  voteType    String
-  postId      Int       
-  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId      Int       
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       Int    @id @default(autoincrement())
+  voteType String
+  postId   Int
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
 
 model Comment {
-  id          Int               @id @default(autoincrement())
-  createdAt   DateTime          @default(now())
-  content     String        
-  userId      Int       
-  createdBy   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isHidden    Boolean           @default(false)
-  postId      Int       
-  post        Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parentId    Int?        
-  parent      Comment?          @relation("CommentReply", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[]         @relation("CommentReply")
-  reports     Report[]
-  votes       CommentVote[]    
-  upvotes     Int               @default(0)
-  downvotes   Int               @default(0)
+  id        Int           @id @default(autoincrement())
+  createdAt DateTime      @default(now())
+  content   String
+  userId    Int
+  createdBy User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHidden  Boolean       @default(false)
+  postId    Int
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  Int?
+  parent    Comment?      @relation("CommentReply", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]     @relation("CommentReply")
+  reports   Report[]
+  votes     CommentVote[]
+  upvotes   Int           @default(0)
+  downvotes Int           @default(0)
 }
 
 model CommentVote {
-  id          Int       @id @default(autoincrement())
-  voteType    String
-  commentId   Int       
-  comment     Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  userId      Int       
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  voteType  String
+  commentId Int
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([commentId, userId])
 }
 
 model Report {
-  id          Int       @id @default(autoincrement())
-  userId      Int     
-  createdBy   User      @relation(fields: [userId], references: [id], onDelete: Cascade)  
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  createdBy   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   explanation String
   postId      Int?
-  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   commentId   Int?
-  comment     Comment?  @relation(fields: [commentId], references: [id])
+  comment     Comment? @relation(fields: [commentId], references: [id])
 }
-
