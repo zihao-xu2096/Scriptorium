@@ -1,0 +1,126 @@
+import { UserContext } from "@/context/UserContext";
+import Link from "next/link";
+import { useContext, useState } from "react"
+
+
+export function NavBar() {
+  const { user, loading, logout } = useContext(UserContext);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+  
+  // If still loading, show a loading spinner or message
+  if (loading) {
+    return (
+      <header className="bg-blue-600 p-4">
+        <div className="flex justify-center items-center">
+          <span className="text-white">Loading...</span> {/* Loading message */}
+        </div>
+      </header>
+    );
+  }
+
+  return (
+    <header className="bg-blue-600 p-4">
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-white text-2xl font-bold">
+          Scriptorium
+        </Link>
+
+        <nav className="hidden md:flex space-x-6" id="nav-links">
+          <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+            Search
+          </Link>
+          {user ? (
+            <>
+              <Link href="/create" className="text-white hover:text-gray-300">
+                Create
+              </Link>
+              {user.userType === "ADMIN" && 
+              (<>
+                <Link href="/reports">Reports</Link>
+              </>)}
+              <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                {`${user.firstName} ${user.lastName}`}
+              </Link>
+              <button
+                onClick={logout}
+                className="text-white hover:text-gray-300 transition duration-200 ease-in-out"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                Log In
+              </Link>
+              <Link href="/signup" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                Sign Up
+              </Link>
+            </>
+          )}
+        </nav>
+
+        <button
+          id="hamburger-menu"
+          onClick={toggleMenu}
+          className="md:hidden text-white focus:outline-none"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {isMenuOpen && (
+        <div
+          id="nav-links-sm"
+          className="md:hidden flex flex-col space-y-4 mt-4 bg-blue-700 p-4"
+        >
+          <Link href="/search" className="text-white hover:text-gray-300">
+            Search
+          </Link>
+          {user ? (
+            <>
+              <Link href="/create" className="text-white hover:text-gray-300">
+                Create
+              </Link>
+              <Link href="/profile" className="text-white hover:text-gray-300">
+                {`${user.firstName} ${user.lastName}`}
+              </Link>
+              <button
+                onClick={logout}
+                className="text-white hover:text-gray-300"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-white hover:text-gray-300">
+                Log In
+              </Link>
+              <Link href="/signup" className="text-white hover:text-gray-300">
+                Sign Up
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+    </header>
+  );
+};
