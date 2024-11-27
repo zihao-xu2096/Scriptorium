@@ -1,5 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { getAuthorName } from 'utils/authors';
+
 interface Template {
   id: string;
   title: string;
@@ -9,6 +11,7 @@ interface Template {
   author: {
     name: string;
   };
+  authorId: string;
 }
 
 export default function TemplateDetail() {
@@ -19,6 +22,10 @@ export default function TemplateDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedCode, setEditedCode] = useState('');
+  const [output, setOutput] = useState<string>('');
+  const [isRunning, setIsRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+
   useEffect(() => {
     if (id) {
       fetchTemplate();
@@ -35,8 +42,23 @@ export default function TemplateDetail() {
       if (!response.ok) {
         throw new Error('Template not found');
       }
-      const data = await response.json();
-      setTemplate(data[0]); // Assuming the API returns an array with one template
+
+      const templates = await response.json();
+
+      if (!Array.isArray(templates) || templates.length === 0) {
+        throw new Error('Template not found');
+      }
+
+      const templateData = templates[0];
+      const authorName = await getAuthorName(templateData.authorId);
+
+      setTemplate({
+        ...templateData,
+        author: {
+          name: authorName
+        }
+      });
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load template');
     } finally {
@@ -61,7 +83,7 @@ export default function TemplateDetail() {
           explanation: template.explanation,
           language: template.language,
           code: editedCode,
-          // tags: template.tags  // Add this if you have tags in your Template interface
+          // tags: template.tags
         }),
       });
 
@@ -76,6 +98,48 @@ export default function TemplateDetail() {
       setError(err instanceof Error ? err.message : 'Failed to update template');
     }
   };
+  // Add this new function before the return statement
+  const handleRun = async () => {
+    setIsRunning(true);
+    setRunError(null);
+    setOutput('');
+
+    // Get the current code
+    const currentCode = isEditing ? editedCode : template?.code;
+    if (!currentCode || !template?.language) {
+      setRunError('Code or language is missing');
+      setIsRunning(false);
+      return;
+    }
+    const normalizedLanguage = template?.language.toLowerCase().replace('c++', 'cpp');
+
+    try {
+      const response = await fetch('/api/compile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          language: normalizedLanguage,
+          code: currentCode,
+          stdin: '', // Add stdin support later if needed
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to compile code');
+      }
+
+      setOutput(data.output || 'No output'); 
+    } catch (err) {
+      console.error('Full error:', err); // Log the full error
+      setRunError(err instanceof Error ? err.message : 'Failed to run code');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -138,7 +202,33 @@ export default function TemplateDetail() {
             )}
           </div>
 
-          <div className="text-gray-400">
+          {/* Add Run button and output display here */}
+          <div className="mt-4">
+            <button
+              onClick={handleRun}
+              disabled={isRunning}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600"
+            >
+              {isRunning ? 'Running...' : 'Run Code'}
+            </button>
+
+            {runError && (
+              <div className="mt-4 p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-400">
+                {runError}
+              </div>
+            )}
+
+            {output && !runError && (
+              <div className="mt-4">
+                <h3 className="text-xl font-semibold text-white mb-2">Output</h3>
+                <pre className="bg-gray-900 p-4 rounded-lg text-gray-300 font-mono overflow-x-auto">
+                  {output}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 text-gray-400">
             Created by {template.author?.name || 'Unknown Author'}
           </div>
         </div>

@@ -7,14 +7,31 @@ import path from 'path';
 const languages = {
     'c': {
         fileType: 'c',
-        exec: './a.out',
+        exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
         compile: 'gcc',
+        compileArgs: (input, output) => 
+            process.platform === 'win32' 
+                ? [`${input}`, `-o`, `${output}.exe`] 
+                : [`${input}`, `-o`, output]
     },
     'c++': {
         fileType: 'cpp',
-        exec: './a.out',
+        exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
         compile: 'g++',
-    },    
+        compileArgs: (input, output) => 
+            process.platform === 'win32' 
+                ? [`${input}`, `-o`, `${output}.exe`] 
+                : [`${input}`, `-o`, output]
+    },
+    'cpp': {
+        fileType: 'cpp',
+        exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
+        compile: 'g++',
+        compileArgs: (input, output) => 
+            process.platform === 'win32' 
+                ? [`${input}`, `-o`, `${output}.exe`] 
+                : [`${input}`, `-o`, output]
+    },
     'java': {
         fileType: 'java',
         exec: 'java',
@@ -33,32 +50,60 @@ const languages = {
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         const { language, code, stdin } = req.body;
+        const tempDir = os.tmpdir();
+        const isWindows = process.platform === 'win32';
 
         if (!languages[language]) {
             return res.status(400).json({ message: 'Language not supported right now.' });
         }
 
-        const { fileType, exec, compile } = languages[language];
-        const className = language === 'java' ? 'Main' : 'temp';
-        const fileName = `${className}.${fileType}`;
-        const tempDir = os.tmpdir();
+        const { fileType, exec, compile, compileArgs } = languages[language];
+        const fileName = `temp.${fileType}`;
         const filePath = path.join(tempDir, fileName);
+        const outputPath = path.join(tempDir, 'a');
 
         try {
             await writeFile(filePath, code);
 
-            if (compile) { // Requires compiling
-                await execPromise(`${compile} ${filePath}`); // Compile code
+            if (compile) {
+                try {
+                    let compileCommand;
+                    if (compileArgs) {
+                        const args = compileArgs(filePath, outputPath);
+                        compileCommand = `${compile} ${args.join(' ')}`;
+                    } else {
+                        compileCommand = `${compile} "${filePath}"`;
+                    }
+                    
+                    console.log('Compiling with:', compileCommand);
+                    await execPromise(compileCommand);
+                } catch (compileError) {
+                    return res.status(400).json({ 
+                        message: 'Compilation failed', 
+                        error: compileError.toString() 
+                    });
+                }
             }
 
-            let execCommand = `${exec} ${filePath}`;
-            if (language === 'java') {
-                execCommand = `${exec} -cp ${tempDir} ${className}`;
+            let execCommand;
+            if (['c', 'c++', 'cpp'].includes(language)) {
+                const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a.out');
+                execCommand = `"${exePath}"`;
+            } else if (language === 'java') {
+                execCommand = `${exec} -cp "${tempDir}" Main`;
+            } else {
+                execCommand = `${exec} "${filePath}"`;
             }
 
             const output = await execPromise(execCommand, stdin); // Async call to execute code
 
-            await unlink(filePath); // Removes file
+            // Cleanup
+            await unlink(filePath);
+            if (['c', 'c++', 'cpp'].includes(language)) {
+                const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a.out');
+                await unlink(exePath).catch(() => {});
+            }
+            
             if (language === 'java') {
                 await unlink(path.join(tempDir, `${className}.class`)); // Remove the .class file
             }
@@ -69,7 +114,10 @@ export default async function handler(req, res) {
 
         } catch (error) {
             console.error('Error executing code:', error);
-            return res.status(400).json({ message: 'Code could not compile check for errors.', error: error });
+            return res.status(400).json({ 
+                message: 'Code could not compile check for errors.', 
+                error: error.toString() 
+            });
         }
     } else {
         res.status(405).json({ message: 'Method Not Allowed' });

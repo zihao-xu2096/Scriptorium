@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getAuthorName } from 'utils/authors';
+
 interface Template {
   id: string;
   title: string;
@@ -12,18 +14,11 @@ interface Template {
 export default function SearchTemplates() {
   const [searchType, setSearchType] = useState('language'); // default to language search
   const [searchQuery, setSearchQuery] = useState('');
-  const [templates, setTemplates] = useState<Template[]>([
-    // Dummy data for display
-    {
-      id: '1',
-      title: 'Modern Dashboard',
-      description: 'Clean and modern admin dashboard template',
-      imageUrl: '/background/wave.jpg',
-      category: 'Javascript',
-      author: "Author"
-    },
-    // Add more dummy templates as needed
-  ]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  useEffect(() => {
+    handleSearch();
+  }, []);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -42,9 +37,7 @@ export default function SearchTemplates() {
       const templatesWithAuthors = await Promise.all(
         templatesData.map(async (template: any) => {
           try {
-            const authorResponse = await fetch(`/api/user?userId=${template.authorId}`);
-            const authorData = await authorResponse.json();
-            const authorName = authorData ? `${authorData.firstName} ${authorData.lastName}` : 'Unknown Author';
+            const authorName = await getAuthorName(template.authorId);
 
             return {
               id: template.id.toString(),
