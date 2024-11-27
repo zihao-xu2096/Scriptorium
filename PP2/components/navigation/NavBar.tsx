@@ -23,42 +23,44 @@ export function NavBar() {
   }
 
   return (
-    <header className="bg-blue-600 p-4">
+    <header className="p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
         </Link>
 
+        <div className="h-8 border-2 border-gray-500 grow mx-4"></div>
+
         <nav className="hidden md:flex space-x-6" id="nav-links">
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            Search
+            SEARCH
           </Link>
           {user ? (
             <>
               <Link href="/create" className="text-white hover:text-gray-300">
-                Create
+                CREATE
               </Link>
               {user.userType === "ADMIN" && 
               (<>
-                <Link href="/reports">Reports</Link>
+                <Link href="/reports">REPORTS</Link>
               </>)}
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                {`${user.firstName} ${user.lastName}`}
+                {`${user.firstName} ${user.lastName}`.toLocaleUpperCase()}
               </Link>
               <button
                 onClick={logout}
                 className="text-white hover:text-gray-300 transition duration-200 ease-in-out"
               >
-                Log out
+                LOG OUT
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                Log In
+                LOG IN
               </Link>
               <Link href="/signup" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                Sign Up
+                SIGN UP
               </Link>
             </>
           )}
