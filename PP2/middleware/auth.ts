@@ -15,6 +15,6 @@ export function protectedRoute(handler: Function, protectedMethods: string[]) {
         }
 
         // Call handler API logic
-        return handler({ ...req, user: decoded }, res);
+        return handler({ ...req, ...(decoded ? { user :decoded } : {}) }, res);
     };
 }
