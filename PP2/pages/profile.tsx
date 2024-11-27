@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 export default function Profile() {
@@ -18,19 +17,36 @@ export default function Profile() {
   const [phoneNum, setPhoneNum] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [authorized, setAuthorized] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('accessToken');
+      const accessToken = localStorage.getItem('accessToken');
       const res = await fetch('/api/profile', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
       if (res.status === 401) {
-        setAuthorized(false);
-        return;
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          setAuthorized(false);
+          return;
+        }
+
+        const refreshRes = await fetch('/api/refresh', {
+          headers: {
+            'Authorization': `Bearer ${refreshToken}`,
+          }
+        })
+
+        if (refreshRes.status !== 200) {
+          console.log('Access token refreshed');
+          setAuthorized(false);
+          return;
+        }
+
+        const refreshedAccessToken = await refreshRes.json();
+        localStorage.setItem('accessToken', refreshedAccessToken.accessToken);
       }
       const data = await res.json();
       setUser(data);
@@ -45,12 +61,12 @@ export default function Profile() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem('accessToken');
     const res = await fetch('/api/editProfile', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ firstName, lastName, phoneNum, avatarUrl }),
     });
