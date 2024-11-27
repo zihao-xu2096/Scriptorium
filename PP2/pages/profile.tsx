@@ -71,13 +71,29 @@ export default function Profile() {
       body: JSON.stringify({ firstName, lastName, phoneNum, avatarUrl }),
     });
 
-    if (res.ok) {
-      const updatedUser = await res.json();
-      setUser(updatedUser.user);
-      setEditMode(false);
-    } else {
-      alert('Update failed');
+    if (res.status !== 200) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        setAuthorized(false);
+        return;
+      }
+
+      const refreshRes = await fetch('/api/refresh', {
+        headers: {
+          'Authorization': `Bearer ${refreshToken}`,
+        }
+      })
+
+      if (refreshRes.status !== 200) {
+        setAuthorized(false);
+        alert('Update failed');
+        return;
+      }
     }
+    
+    const updatedUser = await res.json();
+    setUser(updatedUser.user);
+    setEditMode(false);
   };
 
   if (!authorized) {
