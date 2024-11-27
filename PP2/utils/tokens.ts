@@ -10,10 +10,14 @@ const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN
 dotenv.config()
 
 export function generateAccessToken(user: User) {
-    const payload ={
+    const payload = {
         id: user.id,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNum: user.phoneNum || undefined,
+        avatarUrl: user.avatarUrl || undefined
     }
     return jwt.sign(payload, JWT_SECRET as PrivateKey, {
         expiresIn: JWT_EXPIRES_IN,
@@ -21,10 +25,14 @@ export function generateAccessToken(user: User) {
 }
 
 export function generateRefreshToken(user: User) {
-    const payload ={
+    const payload = {
         id: user.id,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNum: user.phoneNum || undefined,
+        avatarUrl: user.avatarUrl || undefined
     }
     return jwt.sign(payload, JWT_REFRESH_SECRET as PrivateKey, {
         expiresIn: JWT_REFRESH_EXPIRES_IN,
@@ -49,7 +57,8 @@ export function verifyAccessToken(token: string | undefined) {
 
 export function verifyRefreshToken(token: string) {
     try {
-        return jwt.verify(token, JWT_REFRESH_SECRET as PublicKey);
+        const decoded = jwt.verify(token, JWT_REFRESH_SECRET as PublicKey);
+        return decoded as User;
     }
     catch (error) {
         return null;

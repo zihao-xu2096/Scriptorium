@@ -1,4 +1,5 @@
-import { useRouter } from 'next/router';
+import { NavBar } from '@/components/navigation/NavBar';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function Profile() {
@@ -17,19 +18,36 @@ export default function Profile() {
   const [phoneNum, setPhoneNum] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [authorized, setAuthorized] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('accessToken');
+      const accessToken = localStorage.getItem('accessToken');
       const res = await fetch('/api/profile', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
       if (res.status === 401) {
-        setAuthorized(false);
-        return;
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          setAuthorized(false);
+          return;
+        }
+
+        const refreshRes = await fetch('/api/refresh', {
+          headers: {
+            'Authorization': `Bearer ${refreshToken}`,
+          }
+        })
+
+        if (refreshRes.status !== 200) {
+          console.log('Access token refreshed');
+          setAuthorized(false);
+          return;
+        }
+
+        const refreshedAccessToken = await refreshRes.json();
+        localStorage.setItem('accessToken', refreshedAccessToken.accessToken);
       }
       const data = await res.json();
       setUser(data);
@@ -44,23 +62,39 @@ export default function Profile() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem('accessToken');
     const res = await fetch('/api/editProfile', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ firstName, lastName, phoneNum, avatarUrl }),
     });
 
-    if (res.ok) {
-      const updatedUser = await res.json();
-      setUser(updatedUser.user);
-      setEditMode(false);
-    } else {
-      alert('Update failed');
+    if (res.status !== 200) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        setAuthorized(false);
+        return;
+      }
+
+      const refreshRes = await fetch('/api/refresh', {
+        headers: {
+          'Authorization': `Bearer ${refreshToken}`,
+        }
+      })
+
+      if (refreshRes.status !== 200) {
+        setAuthorized(false);
+        alert('Update failed');
+        return;
+      }
     }
+    
+    const updatedUser = await res.json();
+    setUser(updatedUser.user);
+    setEditMode(false);
   };
 
   if (!authorized) {
@@ -68,6 +102,9 @@ export default function Profile() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold text-center text-white">Not Authorized/Not Logged In</h2>
+          <p className="text-center text-sm text-gray-400">
+            <Link href="/login" className="text-indigo-500 hover:text-indigo-400 underline">Login here</Link>.
+          </p>          
         </div>
       </div>
     );
@@ -78,8 +115,9 @@ export default function Profile() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
+      <div className="flex flex-col items-center bg-gray-900 min-h-screen">
+        <NavBar />
+        <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg mt-8">
         <h2 className="text-3xl font-bold text-center text-white">Profile</h2>
         {editMode ? (
           <form onSubmit={handleUpdate} className="space-y-4">

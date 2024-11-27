@@ -9,6 +9,10 @@ export type UserPayload = {
   id: number
   userType: "USER" | "ADMIN"
   email: string
+  firstName: string
+  lastName: string
+  phoneNum?: string
+  avatarUrl?: string
 }
 
 export interface ExtendedRequest extends NextApiRequest {
