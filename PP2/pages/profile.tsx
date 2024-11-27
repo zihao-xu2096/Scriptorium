@@ -1,3 +1,4 @@
+import { NavBar } from '@/components/navigation/NavBar';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -114,8 +115,9 @@ export default function Profile() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
+      <div className="flex flex-col items-center bg-gray-900 min-h-screen">
+        <NavBar />
+        <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg mt-8">
         <h2 className="text-3xl font-bold text-center text-white">Profile</h2>
         {editMode ? (
           <form onSubmit={handleUpdate} className="space-y-4">

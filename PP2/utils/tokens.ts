@@ -57,7 +57,8 @@ export function verifyAccessToken(token: string | undefined) {
 
 export function verifyRefreshToken(token: string) {
     try {
-        return jwt.verify(token, JWT_REFRESH_SECRET as PublicKey);
+        const decoded = jwt.verify(token, JWT_REFRESH_SECRET as PublicKey);
+        return decoded as User;
     }
     catch (error) {
         return null;
