@@ -102,7 +102,7 @@ export default function SearchTemplates() {
           explanation: `A helpful ${type.toLowerCase()} template for ${language} that demonstrates best practices and common patterns.`,
           language,
           code: `// Example ${language} code\nfunction example${type}${index + 1}() {\n  console.log("This is a sample template");\n}`,
-          authorId: authorId, // The ID is already a number in the token
+          authorId: authorId,
           tags: [language, type]
         };
         const response = await fetch('/api/Template', {
@@ -131,7 +131,6 @@ export default function SearchTemplates() {
   };
 
   return (
-    // Changed bg-gray-100 to bg-gray-900
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto mb-8">
         {/* Changed text-gray-900 to text-white */}
