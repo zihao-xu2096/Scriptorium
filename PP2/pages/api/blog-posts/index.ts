@@ -20,6 +20,7 @@ type BlogPostsQuery = {
   page?: string | number
   limit?: string | number
   sortBy?: string
+  author?: string
 }
 
 async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError | Post[]>) {
@@ -75,7 +76,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       }
     }
   } else if (req.method === "GET") {
-    const { title, content, tags, templates, page = 1, limit = 10, sortBy }: BlogPostsQuery = req.query;
+    const { author, title, content, tags, templates, page = 1, limit = 10, sortBy }: BlogPostsQuery = req.query;
 
     if (typeof(page) === "string" && !parseInt(page) || typeof(limit) === "string" && !parseInt(limit)) {
       res.status(400).json({ message: "Invalid page and limit values" });
@@ -85,6 +86,10 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
     if (sortBy && !(sortBy === "mostControversial" || sortBy === "mostValued")) {
       res.status(400).json({ message: "Invalid sort value" });
       return;
+    }
+
+    if (author && !parseInt(author)) {
+      res.status(400).json({message: "Invalid author id"})
     }
 
     const tagNames = tags?.split(',').map(tag => tag.trim()) || [];
@@ -113,6 +118,9 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
           content: content ? {
             contains: content
           } : undefined,
+          userId: author ? {
+              equals: parseInt(author)
+          } : undefined,
           tags: tags ? {
             some: {
               label: {
@@ -134,6 +142,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             label: true
           }
         },
+        _count: true
       },
       orderBy: sortBy === "mostControversial" 
       ? { downvotes: 'desc' } 
