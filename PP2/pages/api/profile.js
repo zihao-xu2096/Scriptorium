@@ -3,23 +3,27 @@ import { prisma } from '@/prisma/prisma';
 
 async function handler(req, res) {
     if (req.method === 'GET') {
+        // Get userId from query parameters
+        const userId = req.query.userId || req.user.id;
+
         const user = await prisma.user.findUnique({
             where: {
-                id: req.user.id
+                id: userId
             }
-        })
+        });
 
-        // TODO: Consider checking user exists (should exist since logged in)
+        // Handle case where user is not found
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
         return res.status(200).json({
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
             phoneNum: user.phoneNum,
             avatarUrl: user.avatarUrl
-        })
-    }
-    else {
-        res.status(405).json({ message: 'Method Not Allowed' });
+        });
     }
 }
 

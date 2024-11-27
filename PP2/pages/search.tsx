@@ -36,15 +36,39 @@ export default function SearchTemplates() {
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
       }
-      const data = await response.json();
-      setTemplates(data.map((template: any) => ({
-        id: template.id.toString(),
-        title: template.title,
-        description: template.explanation,
-        imageUrl: '/background/wave.jpg', // You'll need to add image handling
-        category: template.language,
-        author: template.author?.name || 'Unknown Author'
-      })));
+      const templatesData = await response.json();
+
+      // Fetch author details for each template
+      const templatesWithAuthors = await Promise.all(
+        templatesData.map(async (template: any) => {
+          try {
+            const authorResponse = await fetch(`/api/user?userId=${template.authorId}`);
+            const authorData = await authorResponse.json();
+            const authorName = authorData ? `${authorData.firstName} ${authorData.lastName}` : 'Unknown Author';
+
+            return {
+              id: template.id.toString(),
+              title: template.title,
+              description: template.explanation,
+              imageUrl: '/background/wave.jpg',
+              category: template.language,
+              author: authorName
+            };
+          } catch (error) {
+            console.error('Error fetching author details:', error);
+            return {
+              id: template.id.toString(),
+              title: template.title,
+              description: template.explanation,
+              imageUrl: '/background/wave.jpg',
+              category: template.language,
+              author: 'Unknown Author'
+            };
+          }
+        })
+      );
+
+      setTemplates(templatesWithAuthors);
     } catch (error) {
       console.error('Error searching templates:', error);
     }
@@ -200,7 +224,7 @@ export default function SearchTemplates() {
                       By {template.author}
                     </span>
                     {/* Updated button color */}
-                    <button
+                    {/* <button
                       onClick={(e) => {
                         e.preventDefault();
                         // Add your preview logic here
@@ -209,7 +233,7 @@ export default function SearchTemplates() {
                     hover:text-indigo-300"
                     >
                       Preview →
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
