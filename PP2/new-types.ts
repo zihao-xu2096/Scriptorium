@@ -1,5 +1,5 @@
 import { NextApiRequest } from "next";
-
+import { User } from "@prisma/client"; 
 
 export type ApiError = {
   message: string
@@ -16,5 +16,5 @@ export interface ExtendedRequest extends NextApiRequest {
 }
 
 export function isExtended(req: NextApiRequest | ExtendedRequest): req is ExtendedRequest {
-  return req.user;
+  return 'user' in req && req.user !== undefined;
 }

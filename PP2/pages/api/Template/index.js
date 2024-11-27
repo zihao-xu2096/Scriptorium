@@ -37,7 +37,7 @@ async function handler(req, res) {
         data: {
           title,
           explanation,
-          language,
+          language: language.toLowerCase(),
           code,
           author: {
             connect: { id: authorId }
@@ -50,8 +50,8 @@ async function handler(req, res) {
           ...(tags && {
             tags: {
               connectOrCreate: tags.map(tagName => ({
-                where: { name: tagName },
-                create: { name: tagName }
+                where: { name: tagName.toLowerCase() },
+                create: { name: tagName.toLowerCase() }
               }))
             }
           })
@@ -114,12 +114,16 @@ async function handler(req, res) {
         whereClause.authorId = parseInt(authorId);
       }
       if (language) {
-        whereClause.language = language;
+        whereClause.language = {
+          contains: language.toLowerCase()
+        };
       }
       if (tag) {
         whereClause.tags = {
           some: {
-            name: tag
+            name: {
+              contains: language.toLowerCase()
+            }
           }
         };
       }

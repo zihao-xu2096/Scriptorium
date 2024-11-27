@@ -21,7 +21,7 @@ model User {
   firstName        String
   lastName         String
   avatarUrl        String? // URL of Avatar image
-  phoneNum         String         @unique
+  phoneNum         String?         @unique
   createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
   savedTemplates   CodeTemplate[] @relation("SavedTemplates")
   posts            Post[] // One-to-many relation
