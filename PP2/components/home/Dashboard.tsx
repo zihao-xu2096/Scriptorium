@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { UserContext } from '@/context/UserContext';
 import { UserPayload } from "@/new-types";
-import { Post, CodeTemplate } from '@prisma/client';
+import { CodeTemplate, Post } from '@prisma/client';
+import { useRouter } from 'next/router';
+import { useContext, useEffect, useState } from 'react';
 
 const Dashboard = () => {
   const [blogPosts, setBlogPosts] = useState<Post[]>([]);
@@ -141,7 +141,7 @@ const Dashboard = () => {
             Create New Post
           </button>
           <button
-            onClick={() => router.push('/templates/create')}
+            onClick={() => router.push('/newtemplate')}
             className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 focus:outline-none"
           >
             Create New Template
