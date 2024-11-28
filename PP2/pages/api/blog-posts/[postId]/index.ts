@@ -1,10 +1,10 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from '@/prisma/prisma';
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 import { protectedRoute } from "@/middleware/auth";
 import { ApiError, ExtendedRequest, isExtended } from "@/new-types";
-import { NextApiRequest, NextApiResponse } from "next";
 import { Post } from "@prisma/client";
+import { NextApiRequest, NextApiResponse } from "next";
 
 type GetBlogPostQuery = {
   postId?: string
@@ -59,6 +59,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
       } else {
+        console.log("This is error", error);
         res.status(500).json({ message: "Unknown Prisma error" });
         return;
       }

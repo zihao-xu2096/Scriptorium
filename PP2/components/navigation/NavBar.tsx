@@ -1,6 +1,6 @@
 import { UserContext } from "@/context/UserContext";
 import Link from "next/link";
-import { useContext, useState } from "react"
+import { useContext, useState } from "react";
 
 
 export function NavBar() {
@@ -10,20 +10,14 @@ export function NavBar() {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-  
-  // If still loading, show a loading spinner or message
-  if (loading) {
-    return (
-      <header className="bg-blue-600 p-4">
-        <div className="flex justify-center items-center">
-          <span className="text-white">Loading...</span> {/* Loading message */}
-        </div>
-      </header>
-    );
-  }
 
-  return (
-    <header className="p-4">
+  return loading ? 
+  <header className="bg-blue-600 p-4">
+     <div className="flex justify-center items-center">
+       <span className="text-white">Loading...</span> {/* Loading message */}
+     </div>
+   </header> :
+  <header className="p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
@@ -33,34 +27,34 @@ export function NavBar() {
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            SEARCH
+            Search
           </Link>
           {user ? (
             <>
-              <Link href="/create" className="text-white hover:text-gray-300">
-                CREATE
+              <Link href="/newtemplate" className="text-white hover:text-gray-300">
+                Create
               </Link>
               {user.userType === "ADMIN" && 
               (<>
-                <Link href="/reports">REPORTS</Link>
+                <Link href="/reports">Reports</Link>
               </>)}
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                {`${user.firstName} ${user.lastName}`.toLocaleUpperCase()}
+                {`${user.firstName} ${user.lastName}`}
               </Link>
               <button
                 onClick={logout}
                 className="text-white hover:text-gray-300 transition duration-200 ease-in-out"
               >
-                LOG OUT
+                Log Out
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                LOG IN
+                Log In
               </Link>
               <Link href="/signup" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                SIGN UP
+                Sign Up
               </Link>
             </>
           )}
@@ -98,7 +92,7 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/create" className="text-white hover:text-gray-300">
+              <Link href="/newtemplate" className="text-white hover:text-gray-300">
                 Create
               </Link>
               <Link href="/profile" className="text-white hover:text-gray-300">
@@ -124,5 +118,4 @@ export function NavBar() {
         </div>
       )}
     </header>
-  );
 };
