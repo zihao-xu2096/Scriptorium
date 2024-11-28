@@ -1,3 +1,4 @@
+import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getAuthorName } from 'utils/authors';
@@ -88,7 +89,15 @@ export default function TemplateDetail() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update template');
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Unauthorized');
+          const errorData = await response.json();
+          alert(`Failed to create template: ${errorData.error || response.statusText}`);
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
       }
 
       setIsEditing(false);

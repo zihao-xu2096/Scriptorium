@@ -1,3 +1,4 @@
+import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
@@ -51,7 +52,15 @@ export default function TemplateDetail() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create template');
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Unauthorized');
+          const errorData = await response.json();
+          alert(`Failed to create template: ${errorData.error || response.statusText}`);
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
       }
 
       const data = await response.json();

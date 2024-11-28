@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getAuthorName } from 'utils/authors';
+import { refreshAccessToken } from 'utils/refresh';
 
 interface Template {
   id: string;
@@ -175,9 +176,15 @@ export default function SearchTemplates() {
           body: JSON.stringify(templateData)
         });
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Template creation failed:', errorData);
-          throw new Error(`Failed to create template: ${errorData.error || response.statusText}`);
+          const { success } = await refreshAccessToken();
+          if (!success) {
+            alert('Unauthorized');
+            const errorData = await response.json();
+            alert(`Failed to create template: ${errorData.error || response.statusText}`);
+            setTimeout(() => {
+              router.push('/login');
+            }, 100);
+          }
         }
         return response.json();
       });
