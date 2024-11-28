@@ -158,7 +158,8 @@ async function createAdminUser() {
                 firstName: 'Admin',
                 lastName: 'User',
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                phoneNum: '1234567890',
             }
         });
         
@@ -182,16 +183,17 @@ if ! node -e "$NODE_SCRIPT"; then
     exit 1
 fi
 
-# Build the Next.js application
-log_info "Building Next.js application..."
-if ! npm run build; then
-    log_error "Failed to build Next.js application"
-    exit 1
-fi
-
 echo -e "${GREEN}✅ Setup completed successfully!${NC}"
 echo "Admin credentials:"
 echo "Username: admin"
 echo "Password: Admin123!"
 echo ""
-echo "You can now run the application using: npm run start"
+
+# Build and run Docker container
+
+log_info "Building Docker image..."
+if ! docker build -t scriptorium-image .; then
+    log_error "Failed to build Docker image"
+    exit 1
+fi
+

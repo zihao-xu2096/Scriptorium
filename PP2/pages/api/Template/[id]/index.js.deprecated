@@ -1,6 +1,4 @@
-import { prisma } from '@/prisma/prisma';
-import { protectedRoute } from "../../../../middleware/auth";
-
+import { prisma } from "@/prisma/prisma";
 
 async function handler(req, res) {
   const { id } = req.query;
@@ -84,9 +82,7 @@ async function handler(req, res) {
       console.error("Template update error:", error);
       return res.status(500).json({ error: "Update failed" });
     }
-  } 
-  
-  else if (req.method === "DELETE") {
+  } else if (req.method === "DELETE") {
     try {
       await prisma.codeTemplate.delete({
         where: { id: templateId },
@@ -103,4 +99,4 @@ async function handler(req, res) {
   }
 }
 
-export default protectedRoute(handler, ["PUT", "DELETE"]);
+//export default protectedRoute(handler, ["PUT", "DELETE"]);
