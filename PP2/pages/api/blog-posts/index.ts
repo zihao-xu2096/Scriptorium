@@ -141,6 +141,12 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             label: true
           }
         },
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        },
         _count: true
       },
       orderBy: sortBy === "mostControversial" 

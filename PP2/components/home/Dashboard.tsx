@@ -5,10 +5,35 @@ import { UserPayload } from "@/new-types";
 import { Post, CodeTemplate } from '@prisma/client';
 import Link from 'next/link';
 
+interface PostWithDisplay extends Post {
+  tags: {
+      label: string;
+  }[],
+  createdBy: {
+    firstName: string;
+    lastName: string;
+};
+}
+
+interface CodeTemplatesWithDisplay extends CodeTemplate {
+  tags: {
+    id: number;
+    createdAt: Date;
+    updatedAt: Date;
+    name: string;
+  }[];
+  author: {
+      id: number;
+      email: string;
+      firstName: string;
+      lastName: string;
+  };
+}
+
 export const Dashboard = () => {
-  const [blogPosts, setBlogPosts] = useState<Post[]>([]);
-  const [templates, setTemplates] = useState<CodeTemplate[]>([]);
-  const [mostValuedPosts, setMostValuedPosts] = useState<Post[]>([]);
+  const [blogPosts, setBlogPosts] = useState<PostWithDisplay[]>([]);
+  const [templates, setTemplates] = useState<CodeTemplatesWithDisplay[]>([]);
+  const [mostValuedPosts, setMostValuedPosts] = useState<PostWithDisplay[]>([]);
   const { user, loading, login } = useContext(UserContext);
   const router = useRouter();
 
@@ -86,13 +111,17 @@ export const Dashboard = () => {
       if (user) {
         try {
           const responses = await Promise.all([
-            fetch(`/api/blog-posts?author=${user.id}`, {
+            fetch(`/api/blog-posts?author=${user.id}&limit=3`, {
               method: "GET",
               headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
             }), 
             fetch(`/api/template?authorId=${user.id}`, {
               method: 'GET'
             }),
+            fetch(`/api/blog-posts?limit=5&sortBy=mostValued`, {
+              method: "GET",
+              headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
+            })
           ]);
 
           if (responses.some((value) => value.status === 401)) {
@@ -101,12 +130,13 @@ export const Dashboard = () => {
             console.log(responses)
           }
 
-          const [blogPostsData, templatesData] = await Promise.all(
+          const [blogPostsData, templatesData, mostValued] = await Promise.all(
             responses.map(response => response.json())
           );
 
           setBlogPosts(blogPostsData);
-          setTemplates(templatesData);
+          setTemplates(templatesData.slice(0,3));
+          setMostValuedPosts(mostValued)
         } catch (error) {
           console.error('Error fetching data:', error);
         }
@@ -120,25 +150,37 @@ export const Dashboard = () => {
     user &&    
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white">
       {/* Main Content */}
-      <div className="container mx-auto p-6 grid md:grid-flow-col grid-cols-1 md:grid-rows-2 md:grid-cols-2 md:grid-cols-[2fr_1fr] gap-8 sm:gap-12">
+      <h1 className="text-6xl font-serif lg:text-8xl text-center md:text-left md:px-40 pt-10 text-blue-600">
+  Welcome to your Dashboard, {user.firstName}
+</h1>
+      <div className="container mx-auto p-6 grid lg:grid-flow-col grid-cols-1 lg:grid-rows-[auto,_auto] lg:grid-cols-2 lg:grid-cols-[2fr_1fr] gap-8 sm:gap-12">
         
         {/* Left Side - Recent Blog Posts and Templates */}
           {/* Recent Blog Posts */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Recent Blog Posts</h3>
-            {blogPosts.length > 0 ? (
-              blogPosts.map((post) => (
-                <div key={post.id} className="mb-4">
-                  <h4
-                    className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                    onClick={() => router.push(`/blog/${post.id}`)}
-                  >
-                    {post.title}
-                  </h4>
-                  {post.description && <p className="text-gray-500">{post.description}</p>}
+            {blogPosts.length > 0 ? 
+                <div className="flex flex-col space-y-4">
+                {blogPosts.map((post, index) => (
+                  <Link key={index} href={`/blogs/${post.id}`}>
+                    <div  className="p-4 bg-white rounded-lg shadow-md border border-gray-200">
+                      <h3 className="font-bold text-lg text-gray-500">{post.title}</h3>
+                      <p className="text-sm text-gray-500">{post.description}</p>
+                      <div className="mt-2 flex space-x-2">
+                        {post.tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-3 py-1 text-sm font-medium text-green-600 bg-green-100 rounded-full"
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
                 </div>
-              ))
-            ) : (
+             : (
               <p className="text-gray-500">No recent blog posts available.</p>
             )}
           </section>
@@ -147,17 +189,23 @@ export const Dashboard = () => {
           <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Recent Templates</h3>
             {templates.length > 0 ? (
-              templates.map((template) => (
-                <div key={template.id} className="mb-4">
-                  <h4
-                    className="text-lg font-semibold text-green-600 dark:text-green-400 hover:underline cursor-pointer"
-                    onClick={() => router.push(`/templates/${template.id}`)}
-                  >
-                    {template.title}
-                  </h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{template.explanation}</p>
+              <div className="flex flex-col space-y-4">
+              {templates.map((template, index) => (
+              <div key={index} className="p-4 bg-white rounded-l text-gray-800 shadow-md border border-gray-200 ">
+                <h3 className="font-bold text-lg">{template.title}</h3>
+                <div className="mt-2 flex space-x-2">
+                  {template.tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
                 </div>
-              ))
+              </div>
+              ))}
+              </div>
             ) : (
               <p className="text-gray-500">No recent templates available.</p>
             )}
@@ -166,34 +214,62 @@ export const Dashboard = () => {
         {/* Right Side - Most Valued Posts / General Info */}
           {/* Most Valued Blog Posts */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Most Valued Blog Posts</h3>
+            <h3 className="text-xl font-semibold mb-4">Featured Posts</h3>
             {mostValuedPosts.length > 0 ? (
-              mostValuedPosts.map((post) => (
-                <div key={post.id} className="mb-4">
-                  <h4
-                    className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                    onClick={() => router.push(`/blog/${post.id}`)}
+              <div className="grid grid-cols-1  gap-4">
+              {mostValuedPosts.map((post, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center space-x-3 p-2 bg-white pl-4 rounded-md hover:bg-gray-50 transition duration-200"
                   >
-                    {post.title}
-                  </h4>
-                </div>
-              ))
+                    <div className="flex-1">
+                      <Link href={`/blog/${post.id}`} className="font-semibold text-sm text-blue-600 hover:text-blue-800 truncate">
+                          {post.title}
+                      </Link>
+                      <p className="text-xs text-gray-500 mt-1 truncate">{`${post.createdBy.firstName} ${post.createdBy.lastName}`}</p>
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center space-x-1">
+                      {/* Material Icon: Favorite (Heart) */}
+                      <span className="text-sm">{post.upvotes}</span>
+                      <span className="material-icons text-red-500">favorite</span>
+                    </div>
+                  </div>
+              ))}
+              </div>
             ) : (
               <p className="text-gray-500">No valued posts yet.</p>
             )}
           </section>
 
           {/* General Information */}
-          <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Hi, {user.firstName}</h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Welcome to your Scriptorium page!
-            </p>
-            <ul className="space-y-2 mt-4 text-gray-700 dark:text-gray-300">
-              <li>Total Posts: 256</li>
-              <li>Total Templates: 124</li>
-              <li>Active Users: 102</li>
-            </ul>
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md lg:flex lg:flex-col lg:justify-center lg:space-y-6 lg:h-100%">
+          <h3 className="text-xl font-semibold mb-4 md:mb-0">Quick Actions</h3>
+          <ul className="space-y-4">
+            <li>
+              <Link href="/templates/new">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition duration-300">
+                  <span className="material-icons text-indigo-600">add_circle</span>
+                  <span className="text-indigo-600 font-normal text-lg md:text-base">Create New Template</span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/write">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition duration-300">
+                  <span className="material-icons text-yellow-600">create</span>
+                  <span className="text-yellow-600 font-normal text-lg md:text-base">Write Blog Post</span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link href="/profile/settings">
+                <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100 rounded-lg hover:bg-green-200 transition duration-300">
+                  <span className="material-icons text-green-600">settings</span>
+                  <span className="text-green-600 font-normal text-lg md:text-base">Account Settings</span>
+                </div>
+              </Link>
+            </li>
+          </ul>
           </section>
       </div>
     </div>
@@ -292,24 +368,7 @@ const Dash = () => {
 
         {/* Sidebar with Quick Actions */}
         <aside className="hidden lg:block space-y-6">
-          <h3 className="text-xl font-semibold text-gray-700">Quick Actions</h3>
-          <ul className="space-y-3">
-            <li>
-              <Link href="/templates/new">
-                <span className="text-blue-600 hover:underline cursor-pointer">Create New Template</span>
-              </Link>
-            </li>
-            <li>
-              <Link href="/blog/write">
-                <span className="text-blue-600 hover:underline cursor-pointer">Write Blog Post</span>
-              </Link>
-            </li>
-            <li>
-              <Link href="/profile/settings">
-                <span className="text-blue-600 hover:underline cursor-pointer">Account Settings</span>
-              </Link>
-            </li>
-          </ul>
+          
         </aside>
       </div>
     </div>
