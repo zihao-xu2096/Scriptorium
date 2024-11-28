@@ -10,7 +10,6 @@ interface ExtendedRequest extends NextApiRequest {
 
 function handler(req: ExtendedRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    console.log(req.user)
     return res.status(200).json({ userType: req.user.userType});
   } else {
     res.status(405).json({ error: `Method ${req.method} Not Allowed` });
