@@ -10,10 +10,12 @@ interface Template {
   imageUrl: string;
   category: string;
   author: string;
+  authorId: number;
 }
 
 // Add these constants at the top
 const ITEMS_PER_PAGE = 21; // 3x7 grid
+const USER_TEMPLATES_LIMIT = 6;
 
 export default function SearchTemplates() {
   const router = useRouter();
@@ -23,9 +25,10 @@ export default function SearchTemplates() {
   const [allTemplates, setAllTemplates] = useState<Template[]>([]); // Store all templates
   const [displayedTemplates, setDisplayedTemplates] = useState<Template[]>([]); // Store current page templates
 
+  const [userTemplates, setUserTemplates] = useState<Template[]>([]);
+
   const [searchType, setSearchType] = useState('language'); // default to language search
   const [searchQuery, setSearchQuery] = useState('');
-  const [templates, setTemplates] = useState<Template[]>([]);
 
   useEffect(() => {
     handleSearch();
@@ -57,7 +60,8 @@ export default function SearchTemplates() {
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
               category: template.language,
-              author: authorName
+              author: authorName,
+              authorId: template.authorId
             };
           } catch (error) {
             console.error('Error fetching author details:', error);
@@ -67,18 +71,39 @@ export default function SearchTemplates() {
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
               category: template.language,
-              author: 'Unknown Author'
+              author: 'Unknown Author',
+              authorId: template.authorId
             };
           }
         })
       );
 
       setAllTemplates(templatesWithAuthors);
+      updateUserTemplates(templatesWithAuthors);
       updateDisplayedTemplates(templatesWithAuthors, currentPage);
     } catch (error) {
       console.error('Error searching templates:', error);
     }
     // You might want to add error handling UI here
+  };
+
+  // Add function to filter user's templates
+  const updateUserTemplates = (templates: Template[]) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) return;
+
+      const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
+      const userId = decodedToken.id;
+
+      const userOwnedTemplates = templates
+        .filter(template => template.authorId === userId)
+        .slice(0, USER_TEMPLATES_LIMIT); // Limit to 6 templates
+
+      setUserTemplates(userOwnedTemplates);
+    } catch (error) {
+      console.error('Error filtering user templates:', error);
+    }
   };
 
   // Display templates based on current page
@@ -213,76 +238,143 @@ export default function SearchTemplates() {
           </button>
         )}
 
-        {/* Add pagination controls */}
-        <div className="my-8 flex justify-center gap-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
-          >
-            Previous
-          </button>
+        {/* User's Templates Section - Only show on first page */}
+        {currentPage === 1 && userTemplates.length > 0 && (
+          <div className="mb-12 bg-rose-900/30 rounded-xl p-6 border border-rose-800/50">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-white">Your Templates</h2>
+              {/* {userTemplates.length === USER_TEMPLATES_LIMIT && (
+                <Link
+                  href="/search/1?type=authorid&q=me"
+                  className="text-indigo-400 hover:text-indigo-300"
+                >
+                  View All →
+                </Link>
+              )} */}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {userTemplates.map((template) => (
+                <Link
+                  key={template.id}
+                  href={`/template/${template.id}`}
+                  className="block"
+                >
+                  <div
+                    key={template.id}
+                    // Updated card background and hover effects
+                    className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
+                       hover:shadow-lg transition-shadow duration-300 
+                       border border-gray-700"
+                  >
+                    {/* Template Image */}
+                    <div className="aspect-w-16 aspect-h-9">
+                      <img
+                        src={template.imageUrl}
+                        alt={template.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                    {/* Template Info */}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        {/* Updated text colors */}
+                        <h3 className="text-lg font-semibold text-white">
+                          {template.title}
+                        </h3>
+                        <span className="px-2 py-1 text-xs font-medium text-indigo-400 
+                                bg-indigo-900 rounded-full">
+                          {template.category}
+                        </span>
+                      </div>
 
-          <span className="px-4 py-2 text-white">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+                      {/* Updated description color */}
+                      <p className="text-gray-400 text-sm mb-4">
+                        {template.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        {/* Updated stats color */}
+                        <span className="text-sm text-gray-500">
+                          By {template.author}
+                        </span>
+                        {/* Updated button color */}
+                        {/* <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Add your preview logic here
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-indigo-400 
+                      hover:text-indigo-300"
+                      >
+                        Preview →
+                      </button> */}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Template Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedTemplates.map((template) => (
-            <Link
-              key={template.id}
-              href={`/template/${template.id}`}
-              className="block"
-            >
-              <div
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-white">Search</h2>
+            {/* {userTemplates.length === USER_TEMPLATES_LIMIT && (
+                <Link
+                  href="/search/1?type=authorid&q=me"
+                  className="text-indigo-400 hover:text-indigo-300"
+                >
+                  View All →
+                </Link>
+              )} */}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedTemplates.map((template) => (
+              <Link
                 key={template.id}
-                // Updated card background and hover effects
-                className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
+                href={`/template/${template.id}`}
+                className="block"
+              >
+                <div
+                  key={template.id}
+                  // Updated card background and hover effects
+                  className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
                      hover:shadow-lg transition-shadow duration-300 
                      border border-gray-700"
-              >
-                {/* Template Image */}
-                <div className="aspect-w-16 aspect-h-9">
-                  <img
-                    src={template.imageUrl}
-                    alt={template.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-                {/* Template Info */}
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    {/* Updated text colors */}
-                    <h3 className="text-lg font-semibold text-white">
-                      {template.title}
-                    </h3>
-                    <span className="px-2 py-1 text-xs font-medium text-indigo-400 
-                              bg-indigo-900 rounded-full">
-                      {template.category}
-                    </span>
+                >
+                  {/* Template Image */}
+                  <div className="aspect-w-16 aspect-h-9">
+                    <img
+                      src={template.imageUrl}
+                      alt={template.title}
+                      className="w-full h-48 object-cover"
+                    />
                   </div>
+                  {/* Template Info */}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      {/* Updated text colors */}
+                      <h3 className="text-lg font-semibold text-white">
+                        {template.title}
+                      </h3>
+                      <span className="px-2 py-1 text-xs font-medium text-indigo-400 
+                              bg-indigo-900 rounded-full">
+                        {template.category}
+                      </span>
+                    </div>
 
-                  {/* Updated description color */}
-                  <p className="text-gray-400 text-sm mb-4">
-                    {template.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    {/* Updated stats color */}
-                    <span className="text-sm text-gray-500">
-                      By {template.author}
-                    </span>
-                    {/* Updated button color */}
-                    {/* <button
+                    {/* Updated description color */}
+                    <p className="text-gray-400 text-sm mb-4">
+                      {template.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      {/* Updated stats color */}
+                      <span className="text-sm text-gray-500">
+                        By {template.author}
+                      </span>
+                      {/* Updated button color */}
+                      {/* <button
                       onClick={(e) => {
                         e.preventDefault();
                         // Add your preview logic here
@@ -292,11 +384,12 @@ export default function SearchTemplates() {
                     >
                       Preview →
                     </button> */}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Add pagination controls */}
