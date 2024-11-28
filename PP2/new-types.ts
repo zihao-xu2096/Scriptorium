@@ -1,4 +1,5 @@
 import { NextApiRequest } from "next";
+import { Post } from '@prisma/client';
 
 export type ApiError = {
   message: string
@@ -14,23 +15,11 @@ export type UserPayload = {
   avatarUrl?: string
 }
 
-export interface User {
-  id: number;
-  userType: string;
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string;  
-  phoneNum?: string;   
-  createdAt: Date;
-  updatedAt: Date;
+export interface ExtendedRequest extends NextApiRequest {
+  user: UserPayload
 }
 
-export interface ExtendedRequest extends NextApiRequest {
-  user: User;
-}
 
 export function isExtended(req: NextApiRequest | ExtendedRequest): req is ExtendedRequest {
-  return 'user' in req && req.user !== undefined;
+  return Object.hasOwn(req, "user");
 }

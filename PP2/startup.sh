@@ -158,7 +158,8 @@ async function createAdminUser() {
                 firstName: 'Admin',
                 lastName: 'User',
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                phoneNum: '1234567890',
             }
         });
         
