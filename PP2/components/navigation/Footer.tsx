@@ -8,7 +8,6 @@ export function Footer() {
         <p className="text-gray-400">Phone: (123) 456-7890</p>
       </div>
 
-      {/* Social Media Links */}
       <div className="social-media-links flex justify-center md:justify-end space-x-4">
         <a href="#" className="hover:text-gray-400">Facebook</a>
         <a href="#" className="hover:text-gray-400">Twitter</a>

@@ -115,8 +115,9 @@ export default function Profile() {
   }
 
   return (
+    <>
+      <NavBar />
       <div className="flex flex-col items-center bg-gray-900 min-h-screen">
-        <NavBar />
         <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg mt-8">
         <h2 className="text-3xl font-bold text-center text-white">Profile</h2>
         {editMode ? (
@@ -209,5 +210,6 @@ export default function Profile() {
         )}
       </div>
     </div>
+  </>
   );
 }
