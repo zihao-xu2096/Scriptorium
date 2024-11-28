@@ -1,6 +1,6 @@
 import { UserContext } from "@/context/UserContext";
 import Link from "next/link";
-import { useContext, useState } from "react"
+import { useContext, useState } from "react";
 
 
 export function NavBar() {
@@ -33,7 +33,7 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/create" className="text-white hover:text-gray-300">
+              <Link href="/newtemplate" className="text-white hover:text-gray-300">
                 Create
               </Link>
               {user.userType === "ADMIN" &&
@@ -94,7 +94,7 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/create" className="text-white hover:text-gray-300">
+              <Link href="/newtemplate" className="text-white hover:text-gray-300">
                 Create
               </Link>
               <Link href="/profile" className="text-white hover:text-gray-300">

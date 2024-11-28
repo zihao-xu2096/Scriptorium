@@ -1,6 +1,3 @@
-import Image from "next/image";
-import localFont from "next/font/local";
-import { NavBar } from "@/components/navigation/NavBar";
 import Dashboard from "@/components/home/Dashboard";
 import { useContext } from "react";
 import { UserContext } from "@/context/UserContext";
