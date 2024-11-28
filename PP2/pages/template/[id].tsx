@@ -26,6 +26,12 @@ export default function TemplateDetail() {
   const [output, setOutput] = useState<string>('');
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [currentUserID, setCurrentUserID] = useState<number | null>(null);
+
+
+  useEffect(() => {
+    fetchCurrentUserID();
+  }, [])
 
   useEffect(() => {
     if (id) {
@@ -37,6 +43,25 @@ export default function TemplateDetail() {
       setEditedCode(template.code);
     }
   }, [template]);
+
+  const fetchCurrentUserID = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch('/api/user/fetchAuthorID', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserID(data.authorID);
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user ID:', error);
+    }
+  }
+
+
   const fetchTemplate = async () => {
     try {
       const response = await fetch(`/api/Template?id=${id}`);
@@ -140,7 +165,7 @@ export default function TemplateDetail() {
         throw new Error(data.message || 'Failed to compile code');
       }
 
-      setOutput(data.output || 'No output'); 
+      setOutput(data.output || 'No output');
     } catch (err) {
       console.error('Full error:', err); // Log the full error
       setRunError(err instanceof Error ? err.message : 'Failed to run code');
@@ -179,22 +204,24 @@ export default function TemplateDetail() {
             <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
             <p className="text-gray-400">{template.explanation}</p>
           </div>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">Code</h2>
-            {isEditing ? (
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Edit
-              </button>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
+            {Number(currentUserID) === Number(template.authorId) && (
+              isEditing ? (
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Edit
+                </button>
+              )
             )}
           </div>
           <div className="bg-gray-900 p-4 rounded-lg">
