@@ -75,7 +75,7 @@ export default function TemplateDetail() {
       setIsRunning(false);
       return;
     }
-    const normalizedLanguage = template?.language.toLowerCase().replace('c++', 'cpp');
+    const normalizedLanguage = language.toLowerCase().replace('c++', 'cpp');
 
     try {
       const response = await fetch('/api/compile', {
