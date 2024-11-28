@@ -1,7 +1,6 @@
 
 export function Footer() {
-  <footer id="footer" className="bg-gray-800 text-white p-6 flex flex-col lg:flex-row md:flex-row sm:flex-col justify-between items-center space-y-6 md:space-y-0">
-      {/* Contact Information */}
+  return <footer id="footer" className="bg-gray-800 text-white p-6 flex flex-col lg:flex-row md:flex-row sm:flex-col justify-between items-center space-y-6 md:space-y-0">
       <div className="contact-info text-center md:text-left">
         <h4 className="text-lg font-semibold mb-2">Contact Us</h4>
         <p className="text-gray-400">Email: contact@mysite.com</p>

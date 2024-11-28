@@ -39,8 +39,8 @@ export default function SearchTemplates() {
     try {
       // Call the templates API with the search query
       const url = searchQuery
-        ? `/api/Template?${searchType}=${encodeURIComponent(searchQuery)}`
-        : '/api/Template';
+        ? `/api/template?${searchType}=${encodeURIComponent(searchQuery)}`
+        : '/api/template';
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -166,7 +166,7 @@ export default function SearchTemplates() {
           authorId: authorId,
           tags: [language, type]
         };
-        const response = await fetch('/api/Template', {
+        const response = await fetch('/api/template', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

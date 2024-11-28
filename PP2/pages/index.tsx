@@ -6,6 +6,7 @@ import { useContext } from "react";
 import { UserContext } from "@/context/UserContext";
 import { LandingPage } from "@/components/home/Landing";
 import { RichTextEditor } from "@/components/editor/Editor";
+import { Footer } from "@/components/navigation/Footer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,7 +26,7 @@ export default function Home() {
     <>
       <NavBar />
       {user ? <Dashboard /> : <LandingPage />}
-      <RichTextEditor readOnly={false} initialValue={[]}/>
+      <Footer />
     </>
   );
 }
