@@ -206,8 +206,7 @@ export default function TemplateDetail() {
           </div>
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
-            {Number(currentUserID) === Number(template.authorId) && (
-              isEditing ? (
+            {isEditing ? (
                 <button
                   onClick={handleSave}
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -221,8 +220,7 @@ export default function TemplateDetail() {
                 >
                   Edit
                 </button>
-              )
-            )}
+              )}
           </div>
           <div className="bg-gray-900 p-4 rounded-lg">
             {isEditing ? (
