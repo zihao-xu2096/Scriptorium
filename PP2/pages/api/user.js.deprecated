@@ -34,4 +34,4 @@ async function handler(req, res) {
   return res.status(405).json({ message: "Method Not Allowed" });
 }
 
-export default handler;
+//export default handler;

@@ -1,12 +1,29 @@
-import { prisma } from '@/prisma/prisma';
 import { protectedRoute } from '@/middleware/auth';
+import { prisma } from '@/prisma/prisma';
+import { NextApiRequest, NextApiResponse } from 'next';
 
+interface CreateTemplateBody {
+  title: string;
+  explanation: string;
+  language: string;
+  code: string;
+  authorId: number;
+  tags?: string[];
+  parentId?: number;
+}
 
-async function handler(req, res) {
+interface QueryParams {
+  id?: string;
+  authorId?: string;
+  language?: string;
+  tag?: string;
+}
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
       // Validate required fields
-      const { title, explanation, language, code, authorId, tags, parentId } = req.body;
+      const { title, explanation, language, code, authorId, tags, parentId }: CreateTemplateBody = req.body;
       
       if (!title || !explanation || !language || !code || !authorId) {
         return res.status(400).json({ 
@@ -28,7 +45,7 @@ async function handler(req, res) {
       // If parentId is provided, verify the template exists
       if (parentId) {
         parentTemplate = await prisma.codeTemplate.findUnique({
-          where: { id: parseInt(parentId) }
+          where: { id: parentId }
         });
       }
 
@@ -102,9 +119,9 @@ async function handler(req, res) {
 
   else if (req.method === 'GET') {
     try {
-      const { id, authorId, language, tag } = req.query;
+      const { id, authorId, language, tag }: QueryParams = req.query;
 
-      let whereClause = {};
+      let whereClause: any = {};
       
       // Build where clause based on provided query parameters
       if (id) {
@@ -122,7 +139,7 @@ async function handler(req, res) {
         whereClause.tags = {
           some: {
             name: {
-              contains: language.toLowerCase()
+              contains: tag.toLowerCase()
             }
           }
         };
