@@ -42,7 +42,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         data: {
           title,
           description,
-          content: '',
+          content: '[{"type":"paragraph","align":"center","children":[{"text":""}]}]',
           tags: {
             connectOrCreate: tags?.map((tag) => ({
               where: { label: tag },
@@ -147,6 +147,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             lastName: true
           }
         },
+        votes: true,
         _count: true
       },
       orderBy: sortBy === "mostControversial" 

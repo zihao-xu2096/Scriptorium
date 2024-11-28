@@ -9,7 +9,8 @@ import {
   Descendant,
   Element as SlateElement,
   BaseRange,
-  Range
+  Range,
+  Node,
 } from 'slate'
 import { withHistory, HistoryEditor } from 'slate-history'
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -131,10 +132,24 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
   const renderElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
   const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
   const [editor] = useState(() => withInlines(withHistory(withReact(createEditor()))));
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState<Descendant[]>([{type:"paragraph",align:"center",children:[{text:""}]}]);
+  const [templates, setTemplates] = useState<number[]>([]);
 
   const ref = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const insertLink = (editor: Editor) => {
+    return (template: TemplateInfo) => {
+      const link: LinkElement  = {
+        type: 'link',
+        template,
+        children: [{ text: '' }],
+      }
+      setTemplates(templates.concat(template.id))
+      Transforms.insertNodes(editor, link);
+      Transforms.move(editor);
+    }
+  }
 
   /*
   useEffect(() => {
@@ -160,8 +175,26 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
       const isAstChange = editor.operations.some(
       op => 'set_selection' !== op.type
       )
+      editor.operations.forEach((operation) => {
+        if (operation.type === 'remove_node') {
+          const { node } = operation;
+
+          if (isElement(node) && isLinkElement(node) && node.template) {
+            console.log(node)
+            const indexOf = templates.findIndex(val => val === node.template?.id)
+            console.log(templates)
+            console.log(indexOf)
+            if (indexOf >= 0) {
+              const copy = [...templates];
+              copy.splice(indexOf, 1);
+              console.log(copy)
+              setTemplates(copy);
+            }
+          }
+        }
+      });
       if (isAstChange) {
-          const content = JSON.stringify(value);
+          const content = value;
           setContent(content);
         }
       }
@@ -187,6 +220,8 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         placeholder="Enter some rich text…"
+
+        className="w-full min-h-80 bg-gray-900 my-4 rounded-md"
         spellCheck
         autoFocus
         readOnly={readOnly}
@@ -209,21 +244,27 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
         }
       />
     </Slate>
+    <button onClick={async () => {
+      
+      const res = await fetch(`/api/blog-posts/4`, {
+        method: "PUT",
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
+          'Content-Type': "application/json"
+        },
+        body: JSON.stringify({
+          content: JSON.stringify(content),
+          templates,
+
+        })
+      })
+
+      const message = await res.json();
+      console.log(message)
+    }}>submit</button>
     <LinkModal onInsert={insertLink(editor)} ref={dialogRef} />
     </>
   )
-}
-
-const insertLink = (editor: Editor) => {
-  return (template: TemplateInfo) => {
-    const link: LinkElement  = {
-      type: 'link',
-      template,
-      children: [{ text: '' }],
-    }
-    Transforms.insertNodes(editor, link);
-    Transforms.move(editor);
-  }
 }
 
 const toggleBlock = (editor: Editor, format: 'left' | 'center' | 'right' | 'justify' |
@@ -523,3 +564,10 @@ const withInlines = (editor: Editor) => {
 }
 
 
+function isElement(val: Node): val is CustomElement{
+  return  val.hasOwnProperty('type')
+}
+
+function isLinkElement(val: CustomElement): val is LinkElement {
+  return val.type === "link"
+}

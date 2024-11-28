@@ -53,7 +53,8 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (results.length > 0 && ref) {
-      onInsert({ title: results[index].title, url: `/templates/${results[index].id}`, id: results[index].id});
+      onInsert({ title: results[index].title, url: `/template/${results[index].id}`, id: results[index].id});
+      setSearch('');
       formRef.current?.reset();
       dialogRef.current?.close();
     }
@@ -61,6 +62,7 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
 
   const handleClose = () => {
     setIndex(0);
+    setSearch('');
     formRef.current?.reset();
     dialogRef.current?.close();
   };
@@ -88,7 +90,7 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
           case 'Tab':
           case 'Enter':
             event.preventDefault()
-            onInsert(onInsert({ title: results[index].title, url: `/templates/${results[index].id}`, id: results[index].id}));
+            onInsert(onInsert({ title: results[index].title, url: `/template/${results[index].id}`, id: results[index].id}));
             handleClose();
             break
           case 'Escape':
@@ -117,7 +119,9 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
             <div
               key={result.id}
               onClick={() => {
-                onInsert(onInsert({ title: result.title, url: `/templates/${result.id}`, id: result.id}));
+                setSearch('');
+                console.log(result);
+                onInsert({ title: result.title, url: `/template/${result.id}`, id: result.id});
                 formRef.current?.reset();
                 handleClose();
               }}
