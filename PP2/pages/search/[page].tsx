@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getAuthorName } from 'utils/authors';
 
@@ -11,7 +12,17 @@ interface Template {
   author: string;
 }
 
+// Add these constants at the top
+const ITEMS_PER_PAGE = 21; // 3x7 grid
+
 export default function SearchTemplates() {
+  const router = useRouter();
+  const { page } = router.query;
+  const currentPage = parseInt(page as string) || 1;
+
+  const [allTemplates, setAllTemplates] = useState<Template[]>([]); // Store all templates
+  const [displayedTemplates, setDisplayedTemplates] = useState<Template[]>([]); // Store current page templates
+
   const [searchType, setSearchType] = useState('language'); // default to language search
   const [searchQuery, setSearchQuery] = useState('');
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -27,6 +38,7 @@ export default function SearchTemplates() {
       const url = searchQuery
         ? `/api/Template?${searchType}=${encodeURIComponent(searchQuery)}`
         : '/api/Template';
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch templates');
@@ -61,14 +73,45 @@ export default function SearchTemplates() {
         })
       );
 
-      setTemplates(templatesWithAuthors);
+      setAllTemplates(templatesWithAuthors);
+      updateDisplayedTemplates(templatesWithAuthors, currentPage);
     } catch (error) {
       console.error('Error searching templates:', error);
     }
     // You might want to add error handling UI here
   };
 
-  // Add this function in your SearchTemplates component
+  // Display templates based on current page
+  const updateDisplayedTemplates = (templates: Template[], page: number) => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    setDisplayedTemplates(templates.slice(startIndex, endIndex));
+  };
+
+  // Update displayed templates when page changes
+  useEffect(() => {
+    updateDisplayedTemplates(allTemplates, currentPage);
+  }, [currentPage, allTemplates]);
+
+  // Initial search
+  useEffect(() => {
+    handleSearch();
+  }, [searchQuery, searchType]);
+
+  const totalPages = Math.ceil(allTemplates.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (newPage: number) => {
+    router.push({
+      pathname: '/search/[page]',
+      query: {
+        page: newPage,
+        ...(searchQuery && { q: searchQuery }),
+        ...(searchType && { type: searchType })
+      }
+    });
+  };
+
+  // Seed data button
   const handleSeedDatabase = async () => {
     try {
       const programmingLanguages = ['JavaScript', 'Python', 'TypeScript', 'Java', 'C++', 'Ruby', 'Go'];
@@ -161,7 +204,7 @@ export default function SearchTemplates() {
           </button>
         </form>
         {/* Seed Button - Only show if access token exists */}
-        {(
+        {currentPage === 1 && (
           <button
             onClick={handleSeedDatabase}
             className="px-6 py-3 mb-8 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900"
@@ -170,9 +213,32 @@ export default function SearchTemplates() {
           </button>
         )}
 
+        {/* Add pagination controls */}
+        <div className="my-8 flex justify-center gap-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="px-4 py-2 text-white">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+
         {/* Template Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {templates.map((template) => (
+          {displayedTemplates.map((template) => (
             <Link
               key={template.id}
               href={`/template/${template.id}`}
@@ -231,6 +297,29 @@ export default function SearchTemplates() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Add pagination controls */}
+        <div className="my-8 flex justify-center gap-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="px-4 py-2 text-white">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
