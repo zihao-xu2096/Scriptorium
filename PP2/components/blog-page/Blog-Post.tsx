@@ -28,10 +28,12 @@ export const BlogPost = function ({id}: PostProps) {
         if (!response.ok) {
           console.log(response);
           setLoading(false);
+          return;
         }
   
       
         const results: Post = await response.json();
+        console.log(results)
         setPost(results);
       } catch (error) {
         console.error(error);
