@@ -47,13 +47,8 @@ if ! npx prisma db push --skip-generate; then
 fi
 
 # Start the server
-log_info "Starting the server..."
-if [ "$NODE_ENV" = "production" ]; then
-    # Production mode
-    log_info "Running in production mode"
-    npm run start
-else
-    # Development mode
-    log_info "Running in development mode"
-    npm run dev
+log_info "Starting Docker containers..."
+if ! docker compose up; then
+    log_error "Failed to start Docker containers"
+    exit 1
 fi
