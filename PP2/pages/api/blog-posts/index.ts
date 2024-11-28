@@ -1,10 +1,10 @@
 import { prisma } from '@/prisma/prisma';
 
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { protectedRoute } from "@/middleware/auth";
-import { NextApiRequest, NextApiResponse } from 'next';
 import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { Post } from '@prisma/client';
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { NextApiRequest, NextApiResponse } from 'next';
 
 type CreateBlogPostsBody = {
   title: string
@@ -77,7 +77,6 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
     }
   } else if (req.method === "GET") {
     const { author, title, content, tags, templates, page = 1, limit = 10, sortBy }: BlogPostsQuery = req.query;
-
     if (typeof(page) === "string" && !parseInt(page) || typeof(limit) === "string" && !parseInt(limit)) {
       res.status(400).json({ message: "Invalid page and limit values" });
       return;
