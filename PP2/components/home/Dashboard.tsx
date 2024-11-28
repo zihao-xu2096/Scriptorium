@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { UserContext } from '@/context/UserContext';
 import { UserPayload } from "@/new-types";
-import { Post, CodeTemplate } from '@prisma/client';
 import Link from 'next/link';
+import { CodeTemplate, Post } from '@prisma/client';
+import { useRouter } from 'next/router';
+import { useContext, useEffect, useState } from 'react';
 
 export const Dashboard = () => {
   const [blogPosts, setBlogPosts] = useState<Post[]>([]);
