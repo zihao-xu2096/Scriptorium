@@ -135,9 +135,16 @@ export default function Profile() {
       body: JSON.stringify({ firstName, lastName, phoneNum, avatarUrl }),
     });
 
+    if (res.status === 400) {
+      alert('Invalid phone number. Must be greater 9 digits and numerical only.');
+      return;
+    }
+
     if (res.status !== 200) {
+      console.log('Update failed');
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
+        console.log('No refresh token');
         setAuthorized(false);
         return;
       }
@@ -149,6 +156,7 @@ export default function Profile() {
       })
 
       if (refreshRes.status !== 200) {
+
         setAuthorized(false);
         alert('Update failed');
         return;
@@ -185,7 +193,7 @@ export default function Profile() {
   }
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <div>Loading... Please refresh the page if this persists for longer than 10 seconds as the profile could not be loaded properly.</div>;
   }
 
   return (
