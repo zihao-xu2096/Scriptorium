@@ -66,9 +66,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           }),
           ...(tags && {
             tags: {
-              connectOrCreate: tags.map(tagName => ({
-                where: { name: tagName.toLowerCase() },
-                create: { name: tagName.toLowerCase() }
+              connectOrCreate: tags.map(tag => ({
+                where: { name: tag },
+                create: { name: tag }
               }))
             }
           })

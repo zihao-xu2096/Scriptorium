@@ -9,10 +9,14 @@ interface Template {
   explanation: string;
   language: string;
   code: string;
-  author: {
-    name: string;
-  };
+  tags: string[];
+  author: string;
   authorId: string;
+  parentId: string;
+}
+
+interface Tag {
+  name: string;
 }
 
 export default function TemplateDetail() {
@@ -61,7 +65,6 @@ export default function TemplateDetail() {
     }
   }
 
-
   const fetchTemplate = async () => {
     try {
       const response = await fetch(`/api/Template?id=${id}`);
@@ -78,12 +81,15 @@ export default function TemplateDetail() {
       const templateData = templates[0];
       const authorName = await getAuthorName(templateData.authorId);
 
+      const tagNames = templateData.tags?.map((tag: Tag) => tag.name) || [];
+
       setTemplate({
         ...templateData,
-        author: {
-          name: authorName
-        }
+        author: authorName,
+        tags: tagNames
       });
+
+      // console.log(templates)
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load template');
@@ -92,10 +98,15 @@ export default function TemplateDetail() {
     }
 
   };
-  const handleSave = async () => {
+
+  const handleSave = async () => { 
     try {
       if (!template) {
         throw new Error('Template not found');
+      }
+      if (Number(template.authorId) !== Number(currentUserID)) {
+        handleFork();
+        return;
       }
       const accessToken = localStorage.getItem('accessToken');
       const response = await fetch(`/api/Template/${id}`, {
@@ -132,7 +143,57 @@ export default function TemplateDetail() {
       setError(err instanceof Error ? err.message : 'Failed to update template');
     }
   };
-  // Add this new function before the return statement
+
+  //if the user needs to fork
+  const handleFork = async () => { 
+    try {
+      if (!template) {
+        throw new Error('Template not found');
+      }
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/Template`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          title: template.title,
+          explanation: template.explanation,
+          language: template.language,
+          code: editedCode,
+          authorId: currentUserID,
+          tags: template.tags,
+          parentId: template.id
+          // tags: template.tags
+        }),
+      });
+
+      if (response.ok) {
+        const newTemplate = await response.json();
+        if (confirm("Successfully forked! Would you like to go to your new forked template?")) {
+          router.push(`/template/${newTemplate.template.id}`);
+        }
+      } else {
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Unauthorized');
+          const errorData = await response.json();
+          alert(`Failed to create template: ${errorData.error || response.statusText}`);
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
+      }
+
+      setIsEditing(false);
+      // Refresh the template data
+      fetchTemplate();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update template');
+    }
+  };
+
   const handleRun = async () => {
     setIsRunning(true);
     setRunError(null);
@@ -211,7 +272,7 @@ export default function TemplateDetail() {
                   onClick={handleSave}
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
-                  Save
+                  {Number(template.authorId) === Number(currentUserID) ? 'Save' : 'Save and Fork'}
                 </button>
               ) : (
                 <button
@@ -263,8 +324,20 @@ export default function TemplateDetail() {
           </div>
 
           <div className="mt-4 text-gray-400">
-            Created by {template.author?.name || 'Unknown Author'}
+            Created by {template.author || 'Unknown Author'}
           </div>
+          {template.parentId && (
+            <div className="mt-4 text-gray-400">
+              <span>Forked from </span>
+              <button 
+                onClick={() => router.push(`/template/${template.parentId}`)}
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                parent template →
+              </button>
+              
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -9,7 +9,8 @@ interface Template {
   title: string;
   description: string;
   imageUrl: string;
-  category: string;
+  language: string;
+  tags: string[];
   author: string;
   authorId: number;
 }
@@ -60,7 +61,7 @@ export default function SearchTemplates() {
               title: template.title,
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
-              category: template.language,
+              language: template.language,
               author: authorName,
               authorId: template.authorId
             };
@@ -71,7 +72,7 @@ export default function SearchTemplates() {
               title: template.title,
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
-              category: template.language,
+              language: template.language,
               author: 'Unknown Author',
               authorId: template.authorId
             };
@@ -290,7 +291,7 @@ export default function SearchTemplates() {
                         </h3>
                         <span className="px-2 py-1 text-xs font-medium text-indigo-400 
                                 bg-indigo-900 rounded-full">
-                          {template.category}
+                          {template.language}
                         </span>
                       </div>
 
@@ -367,7 +368,7 @@ export default function SearchTemplates() {
                       </h3>
                       <span className="px-2 py-1 text-xs font-medium text-indigo-400 
                               bg-indigo-900 rounded-full">
-                        {template.category}
+                        {template.language}
                       </span>
                     </div>
 
