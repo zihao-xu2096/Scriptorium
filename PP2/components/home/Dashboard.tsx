@@ -114,7 +114,7 @@ export const Dashboard = () => {
               method: "GET",
               headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
             }), 
-            fetch(`/api/template?authorId=${user.id}`, {
+            fetch(`/api/Template?authorId=${user.id}`, {
               method: 'GET'
             }),
             fetch(`/api/blog-posts?limit=5&sortBy=mostValued`, {
@@ -184,31 +184,33 @@ export const Dashboard = () => {
             )}
           </section>
 
-          {/* Recent Templates */}
-          <section className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h3 className="text-xl font-semibold mb-4">Recent Templates</h3>
-            {templates.length > 0 ? (
-              <div className="flex flex-col space-y-4">
-              {templates.map((template, index) => (
-              <div key={index} className="p-4 bg-gray-700 rounded-lg text-white shadow-md border border-gray-600">
-                <h3 className="font-bold text-lg">{template.title}</h3>
-                <div className="mt-2 flex space-x-2">
-                  {template.tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
+      {/* Recent Templates */}
+      <section className="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h3 className="text-xl font-semibold mb-4">Recent Templates</h3>
+        {templates.length > 0 ? (
+          <div className="flex flex-col space-y-4">
+            {templates.map((template, index) => (
+              <Link key={index} href={`/template/${template.id}`}>
+                <div className="p-4 bg-gray-700 rounded-lg text-white shadow-md border border-gray-600 cursor-pointer hover:bg-gray-600 transition duration-200">
+                  <h3 className="font-bold text-lg">{template.title}</h3>
+                  <div className="mt-2 flex space-x-2">
+                    {template.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              ))}
-              </div>
-            ) : (
-              <p className="text-gray-400">No recent templates available.</p>
-            )}
-          </section>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400">No recent templates available.</p>
+        )}
+      </section>
 
         {/* Right Side - Most Valued Posts / General Info */}
           {/* Most Valued Blog Posts */}
@@ -260,7 +262,7 @@ export const Dashboard = () => {
               </Link>
             </li>
             <li>
-              <Link href="/profile/settings">
+              <Link href="/profile">
                 <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100 rounded-lg hover:bg-green-200 transition duration-300">
                   <span className="material-icons text-green-600">settings</span>
                   <span className="text-green-600 font-normal text-lg md:text-base">Account Settings</span>
