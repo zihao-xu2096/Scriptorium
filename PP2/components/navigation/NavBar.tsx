@@ -11,13 +11,15 @@ export function NavBar() {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  console.log(user);
+
   return loading ? 
   <header className="bg-blue-600 p-4">
      <div className="flex justify-center items-center">
        <span className="text-white">Loading...</span> {/* Loading message */}
      </div>
    </header> :
-  <header className="p-4">
+  <header className="bg-blue-600 p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
@@ -31,10 +33,10 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              {user.userType === "ADMIN" && 
-              (<>
-                <Link href="/reports">Reports</Link>
-              </>)}
+              {user.userType === "ADMIN" &&
+              <Link href="/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                Reports
+              </Link>}
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 {`${user.firstName} ${user.lastName}`}
               </Link>

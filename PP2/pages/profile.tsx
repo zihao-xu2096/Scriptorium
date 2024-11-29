@@ -197,8 +197,9 @@ export default function Profile() {
   }
 
   return (
+    <>
+      <NavBar />
       <div className="flex flex-col items-center bg-gray-900 min-h-screen">
-        <NavBar />
         <div className="flex flex-row items-center bg-gray-900 min-h-screen">
 
           <div className="w-[600px] mx-10 p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
@@ -325,5 +326,6 @@ export default function Profile() {
         </div>
     </div>
     
+  </>
   );
 }
