@@ -207,6 +207,7 @@ async function populateDatabase() {
     console.log("Templates created");
 
 
+
     // Create Posts for each user
     console.log("Creating Posts...");
     const posts = [];
@@ -301,6 +302,9 @@ async function populateDatabase() {
     await prisma.$disconnect();
   }
 }
+
+
+
 
 createAdminUser();
 populateDatabase();
