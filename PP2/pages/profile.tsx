@@ -116,7 +116,7 @@ export default function Profile() {
         },
       })
       const postData = await resPosts.json();
-      console.log("Fetched posts:", postData);
+      console.log("Fetched posts::", postData);
       setPosts(Array.isArray(postData.posts) ? postData.posts : []); // Ensure posts is always an array
     };
 
@@ -300,7 +300,7 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>
