@@ -34,6 +34,7 @@ export default function Profile() {
   const [authorized, setAuthorized] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 4;
+
   useEffect(() => {
     const fetchUser = async () => {
       const accessToken = localStorage.getItem('accessToken');
@@ -115,8 +116,8 @@ export default function Profile() {
         },
       })
       const postData = await resPosts.json();
-      console.log(postData)
-      setPosts(postData);
+      console.log("Fetched posts::", postData);
+      setPosts(Array.isArray(postData.posts) ? postData.posts : []); // Ensure posts is always an array
     };
 
     fetchUser();
@@ -172,12 +173,10 @@ export default function Profile() {
     setCurrentPage(page);
   };
 
-
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(posts.length / postsPerPage);
-
 
   if (!authorized) {
     return (
@@ -301,31 +300,30 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>
-                        ))}
+              ))}
             </div>
 
             <div className="flex justify-center space-x-2 mt-4">
               {Array.from({ length: totalPages }, (_, index) => (
-              <button
-              key={index}
-              onClick={() => handlePageChange(index + 1)}
-              className={`px-3 py-1 rounded-md ${
-              currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
-              }`}
-              >
-              {index + 1}
-              </button>
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
+                  }`}
+                >
+                  {index + 1}
+                </button>
               ))}
             </div>
           </div>
 
         </div>
-    </div>
-    
-  </>
+      </div>
+    </>
   );
 }

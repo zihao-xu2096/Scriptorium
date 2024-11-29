@@ -67,7 +67,7 @@ export default function TemplateDetail() {
 
   const fetchTemplate = async () => {
     try {
-      const response = await fetch(`/api/template?id=${id}`);
+      const response = await fetch(`/api/Template?id=${id}`);
       if (!response.ok) {
         throw new Error('Template not found');
       }
@@ -107,7 +107,7 @@ export default function TemplateDetail() {
         return;
       }
       const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/template/${id}`, {
+      const response = await fetch(`/api/Template/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

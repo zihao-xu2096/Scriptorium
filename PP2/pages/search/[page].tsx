@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { getAuthorName } from 'utils/authors';
 import { refreshAccessToken } from 'utils/refresh';
 
@@ -46,8 +46,8 @@ export default function SearchTemplates() {
     try {
       // Call the templates API with the search query
       const url = searchQuery
-        ? `/api/template?${searchType}=${encodeURIComponent(searchQuery)}`
-        : '/api/template';
+        ? `/api/Template?${searchType}=${encodeURIComponent(searchQuery)}`
+        : '/api/Template';
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -176,7 +176,7 @@ export default function SearchTemplates() {
           authorId: authorId,
           tags: [language, type]
         };
-        const response = await fetch('/api/template', {
+        const response = await fetch('/api/Template', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
