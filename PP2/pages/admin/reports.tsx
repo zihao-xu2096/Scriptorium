@@ -3,34 +3,43 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
-interface Post {
+interface Report {
   id: number;
-  title: string;
-  content: string;
-  author: {
-    name: string;
-  };
-  reports: number;
+  userId: number;
+  explanation: string;
+  postId: number | null;
+  commentId: number | null;
 }
 
-interface Comment {
+interface PostOrComment {
   id: number;
+  createdAt: string;
   content: string;
-  author: {
-    name: string;
+  userId: number;
+  isHidden: boolean;
+  postId: number | null;
+  parentId: number | null;
+  upvotes: number;
+  downvotes: number;
+  reports: Report[];
+  _count: {
+    reports: number;
   };
-  reports: number;
+  type: 'post' | 'comment';
 }
 
 export default function RecentPosts() {
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [sortType, setSortType] = useState<'posts' | 'comments'>('posts');
+  const [items, setItems] = useState<PostOrComment[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userType, setUserType] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'posts' | 'comments'>('all');
+  const [sortOrder, setSortOrder] = useState<'most' | 'least'>('most');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const maxPageButtons = 5;
 
   useEffect(() => {
     fetchUserType();
@@ -40,7 +49,7 @@ export default function RecentPosts() {
     if (userType === 'ADMIN') {
       fetchContent();
     }
-  }, [userType, sortType]);
+  }, [userType]);
 
   const fetchUserType = async () => {
     setLoadingUser(true);
@@ -71,30 +80,73 @@ export default function RecentPosts() {
     setError(null);
 
     try {
-    const accessToken = localStorage.getItem('accessToken');
-      const postsResponse = await fetch('/api/reports', {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch('/api/reports', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
         },
-      }); 
-      const commentsResponse = await fetch('/api/comments?sort=reports');
+      });
 
-      if (!postsResponse.ok || !commentsResponse.ok) {
+      if (!response.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const postsData = await postsResponse.json();
-      const commentsData = await commentsResponse.json();
-
-      setPosts(postsData);
-      setComments(commentsData);
+      const data = await response.json();
+      console.log("data", data);
+      const itemsWithType = data.map((item: PostOrComment) => ({
+        ...item,
+        type: item.postId ? 'comment' : 'post',
+      }));
+      setItems(itemsWithType);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoadingContent(false);
     }
+  };
+
+  const filteredItems = items.filter((item) => {
+    if (filter === 'posts') return item.type === 'post';
+    if (filter === 'comments') return item.type === 'comment';
+    return true;
+  });
+
+  const sortedItems = filteredItems.sort((a, b) => {
+    if (sortOrder === 'most') {
+      return b.reports.length - a.reports.length;
+    } else {
+      return a.reports.length - b.reports.length;
+    }
+  });
+
+  const paginatedItems = sortedItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const totalPages = Math.ceil(sortedItems.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPageButtons = () => {
+    const pageButtons = [];
+    const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    const endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageButtons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-4 py-2 mx-1 rounded-lg ${currentPage === i ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return pageButtons;
   };
 
   if (loadingUser) {
@@ -123,22 +175,40 @@ export default function RecentPosts() {
     <div className="flex flex-col min-h-screen bg-gray-900">
       <NavBar />
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-white mb-6">Recent Blog Posts and Comments</h1>
+        <h1 className="text-3xl font-bold text-white mb-6">Reported Blog Posts and Comments</h1>
 
-        <div className="flex justify-between items-center mb-6">
-          <div>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <div className="flex space-x-4 mb-4 sm:mb-0">
             <button
-              onClick={() => setSortType('posts')}
-              className={`px-4 py-2 rounded-lg ${sortType === 'posts' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
             >
-              Sort by Posts
+              All
             </button>
             <button
-              onClick={() => setSortType('comments')}
-              className={`ml-4 px-4 py-2 rounded-lg ${sortType === 'comments' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+              onClick={() => setFilter('posts')}
+              className={`px-4 py-2 rounded-lg ${filter === 'posts' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
             >
-              Sort by Comments
+              Posts
             </button>
+            <button
+              onClick={() => setFilter('comments')}
+              className={`px-4 py-2 rounded-lg ${filter === 'comments' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+            >
+              Comments
+            </button>
+          </div>
+          <div className="flex space-x-4">
+            <label htmlFor="sortOrder" className="text-gray-300">Sort by:</label>
+            <select
+              id="sortOrder"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'most' | 'least')}
+              className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300"
+            >
+              <option value="most">Most Reports</option>
+              <option value="least">Least Reports</option>
+            </select>
           </div>
         </div>
 
@@ -147,32 +217,39 @@ export default function RecentPosts() {
         ) : error ? (
           <div className="text-red-500">{error}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortType === 'posts' ? (
-              posts.map((post) => (
-                <div key={post.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
-                  <h2 className="text-xl font-bold text-white mb-2">{post.title}</h2>
-                  <p className="text-gray-400 mb-4">{post.content}</p>
-                  <div className="text-gray-500 mb-2">By {post.author.name}</div>
-                  <div className="text-gray-500">Reports: {post.reports}</div>
-                  <Link href={`/posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
-                    View Post
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedItems.map((item) => (
+                <div key={item.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700 w-full">
+                  <h2 className="text-xl font-bold text-white mb-2">{item.type === 'post' ? 'Post' : 'Comment'}</h2>
+                  <p className="text-gray-400 mb-4">{item.content}</p>
+                  <div className="text-gray-500 mb-2">Reports: {item.reports.length}</div>
+                  <Link href={item.type === 'post' ? `/blogs/${item.id}` : `/comments/${item.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
+                    View {item.type === 'post' ? 'Post' : 'Comment'}
                   </Link>
                 </div>
-              ))
-            ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
-                  <p className="text-gray-400 mb-4">{comment.content}</p>
-                  <div className="text-gray-500 mb-2">By {comment.author.name}</div>
-                  <div className="text-gray-500">Reports: {comment.reports}</div>
-                  <Link href={`/comments/${comment.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
-                    View Comment
-                  </Link>
-                </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+            <div className="flex justify-center mt-6">
+              {currentPage > 1 && (
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="px-4 py-2 mx-1 rounded-lg bg-gray-800 text-gray-300"
+                >
+                  &lt;
+                </button>
+              )}
+              {renderPageButtons()}
+              {currentPage < totalPages && (
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="px-4 py-2 mx-1 rounded-lg bg-gray-800 text-gray-300"
+                >
+                  &gt;
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import Dashboard from "@/components/home/Dashboard";
 import localFont from "next/font/local";
 import { useContext, useEffect } from "react";
@@ -8,17 +9,6 @@ import { Footer } from "@/components/navigation/Footer";
 import { NavBar } from "@/components/navigation/NavBar";
 import { useRouter } from "next/router";
 import { UserPayload } from "@/new-types";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
 
 export default function Home() {
   const { user, loading, login } = useContext(UserContext);

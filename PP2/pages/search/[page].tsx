@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getAuthorName } from 'utils/authors';
+import { refreshAccessToken } from 'utils/refresh';
 
 interface Template {
   id: string;
   title: string;
   description: string;
   imageUrl: string;
-  category: string;
+  language: string;
+  tags: string[];
   author: string;
   authorId: number;
+}
+
+interface Tag {
+  id: string;
+  name: string;
 }
 
 // Add these constants at the top
@@ -51,6 +58,7 @@ export default function SearchTemplates() {
       // Fetch author details for each template
       const templatesWithAuthors = await Promise.all(
         templatesData.map(async (template: any) => {
+          const tagNames = template.tags?.map((tag: Tag) => tag.name) || [];
           try {
             const authorName = await getAuthorName(template.authorId);
 
@@ -59,9 +67,10 @@ export default function SearchTemplates() {
               title: template.title,
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
-              category: template.language,
+              language: template.language,
               author: authorName,
-              authorId: template.authorId
+              authorId: template.authorId,
+              tags: tagNames
             };
           } catch (error) {
             console.error('Error fetching author details:', error);
@@ -70,9 +79,10 @@ export default function SearchTemplates() {
               title: template.title,
               description: template.explanation,
               imageUrl: '/background/wave.jpg',
-              category: template.language,
+              language: template.language,
               author: 'Unknown Author',
-              authorId: template.authorId
+              authorId: template.authorId,
+              tags: tagNames
             };
           }
         })
@@ -175,9 +185,15 @@ export default function SearchTemplates() {
           body: JSON.stringify(templateData)
         });
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Template creation failed:', errorData);
-          throw new Error(`Failed to create template: ${errorData.error || response.statusText}`);
+          const { success } = await refreshAccessToken();
+          if (!success) {
+            alert('Unauthorized');
+            const errorData = await response.json();
+            alert(`Failed to create template: ${errorData.error || response.statusText}`);
+            setTimeout(() => {
+              router.push('/login');
+            }, 100);
+          }
         }
         return response.json();
       });
@@ -194,7 +210,14 @@ export default function SearchTemplates() {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto mb-8">
-        {/* Changed text-gray-900 to text-white */}
+        <button
+          onClick={() => router.push('/profile')}
+          className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
+        >
+          <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
+          <span className="font-medium flex items-center">Back to Profile </span>
+        </button>
+
         <h1 className="text-3xl font-bold text-white mb-6">Find Templates</h1>
 
         {/* Search Form */}
@@ -276,14 +299,14 @@ export default function SearchTemplates() {
                     </div>
                     {/* Template Info */}
                     <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-start justify-between mb-2">
                         {/* Updated text colors */}
                         <h3 className="text-lg font-semibold text-white">
                           {template.title}
                         </h3>
                         <span className="px-2 py-1 text-xs font-medium text-indigo-400 
                                 bg-indigo-900 rounded-full">
-                          {template.category}
+                          {template.language}
                         </span>
                       </div>
 
@@ -291,6 +314,14 @@ export default function SearchTemplates() {
                       <p className="text-gray-400 text-sm mb-4">
                         {template.description}
                       </p>
+                      <div className="mb-2">
+                        <span>tags : </span>
+                        {template.tags.map((tag: String) => (
+                          <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                       <div className="flex items-center justify-between">
                         {/* Updated stats color */}
                         <span className="text-sm text-gray-500">
@@ -360,7 +391,7 @@ export default function SearchTemplates() {
                       </h3>
                       <span className="px-2 py-1 text-xs font-medium text-indigo-400 
                               bg-indigo-900 rounded-full">
-                        {template.category}
+                        {template.language}
                       </span>
                     </div>
 
@@ -368,6 +399,14 @@ export default function SearchTemplates() {
                     <p className="text-gray-400 text-sm mb-4">
                       {template.description}
                     </p>
+                    <div className="mb-2">
+                      <span>tags : </span>
+                      {template.tags.map((tag: String) => (
+                        <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                     <div className="flex items-center justify-between">
                       {/* Updated stats color */}
                       <span className="text-sm text-gray-500">
