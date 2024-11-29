@@ -4,7 +4,6 @@ import localFont from "next/font/local";
 import { useContext, useEffect } from "react";
 import { UserContext } from "@/context/UserContext";
 import { LandingPage } from "@/components/home/Landing";
-import { RichTextEditor } from "@/components/editor/Editor";
 import { Footer } from "@/components/navigation/Footer";
 import { NavBar } from "@/components/navigation/NavBar";
 import { useRouter } from "next/router";

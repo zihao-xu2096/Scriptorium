@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ThumbUp, ThumbDown, Reply } from '@mui/icons-material';
-import { formatDistanceToNowStrict } from 'date-fns';
 import { Comment } from '@prisma/client';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { useEffect, useState } from 'react';
 import { Comment as CommentElement } from './Comment';
 
 interface CommentSectionProps {
@@ -125,7 +124,6 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h3 className="text-2xl font-semibold mb-6 text-gray-800">Comments</h3>
 
-      {/* Back Button */}
       {mainComment && (
         <button
           onClick={handleBackClick}
@@ -139,7 +137,6 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
         <p className="text-center text-gray-500">Loading comments...</p>
       ) : (
         <>
-          {/* Ancestors Level (above the main level) */}
           {history.length > 0 && (
             <div className="space-y-4 mb-6">
               {history.map((ancestor, index) => (
@@ -148,12 +145,10 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
             </div>
           )}
 
-          {/* Main Level (Top-level comments) */}
           {mainComment && (
             <CommentElement comment={mainComment} commentType='MAIN' />
           )}
 
-          {/* Render replies and input */}
           {renderComments()}
 
           <div className="bg-gray-500 p-4 rounded-md shadow-sm">
@@ -172,7 +167,6 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
             </button>
           </div>
 
-          {/* Pagination */}
           {pageCount && pageCount > 1 && (
             <div className="flex justify-between mt-6">
               <button

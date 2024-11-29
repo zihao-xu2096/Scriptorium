@@ -1,23 +1,21 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import { Post } from '@prisma/client';
-import { Editor } from "slate";
+import { useEffect, useState } from "react";
 import { RichTextEditor } from "../editor/Editor";
-import Link from "next/link";
 import { CommentSection } from "./CommentSection";
 
 interface PostProps {
-  id: number
+  id: number;
 }
 
 export interface PostWithDisplay extends Post {
   tags: {
-      label: string;
-  }[],
+    label: string;
+  }[];
   createdBy: {
     firstName: string;
     lastName: string;
-  }, votes: {
+  };
+  votes: {
     id: number;
     userId: number;
     voteType: string;
@@ -25,12 +23,11 @@ export interface PostWithDisplay extends Post {
   }[];
 }
 
-export const BlogPost = function ({id}: PostProps) {
+export const BlogPost = function ({ id }: PostProps) {
   const [post, setPost] = useState<PostWithDisplay | null>(null);
   const [loading, setLoading] = useState(false);
-  
-  useEffect((() => {
 
+  useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
     const fetchCodeTemplates = async () => {
       try {
@@ -40,23 +37,23 @@ export const BlogPost = function ({id}: PostProps) {
             'Authorization': `Bearer ${accessToken}`,
           },
         });
-  
+
         if (!response.ok) {
           console.log(response);
           setLoading(false);
           return;
         }
-        
+
         const results: PostWithDisplay = await response.json();
         setPost(results);
-        console.log(results)
+        console.log(results);
       } catch (error) {
         console.error(error);
       }
-    };  
+    };
 
     fetchCodeTemplates();
-  }), []);
+  }, [id]);
 
   return (
     loading ? <h1>loading</h1> :

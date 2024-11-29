@@ -33,7 +33,6 @@ export default function TemplateDetail() {
   const [runError, setRunError] = useState<string | null>(null);
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
-
   useEffect(() => {
     fetchCurrentUserID();
   }, [])
@@ -149,29 +148,30 @@ export default function TemplateDetail() {
       if (!template) {
         throw new Error('Template not found');
       }
+      const data = {
+        title: template.title,
+        explanation: template.explanation,
+        language: template.language,
+        code: editedCode,
+        authorId: currentUserID,
+        tags: template.tags,
+        parentId: template.id
+      }
+
       const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/Template`, {
+      const response = await fetch(`/api/template`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          title: template.title,
-          explanation: template.explanation,
-          language: template.language,
-          code: editedCode,
-          authorId: currentUserID,
-          tags: template.tags,
-          parentId: template.id
-          // tags: template.tags
-        }),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
         const newTemplate = await response.json();
         if (confirm("Successfully forked! Would you like to go to your new forked template?")) {
-          router.push(`/template/${newTemplate.template.id}`);
+          router.push(`/templateview/${newTemplate.template.id}`);
         }
       } else {
         const { success } = await refreshAccessToken();
@@ -253,7 +253,7 @@ export default function TemplateDetail() {
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/search')}
           className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
         >
           <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
@@ -262,16 +262,19 @@ export default function TemplateDetail() {
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
           <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
           <div className="mb-2">
-            <span>tags : </span>
+            <span className="text-gray-300">tags : </span>
             {template.tags.map((tag: String) => (
-              <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
-              bg-green-900 rounded-full">
+              <span
+                key={tag.toString()}
+                className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
+              bg-green-900 rounded-full"
+              >
                 {tag}
               </span>
             ))}
           </div>
           <div className="mb-6">
-            <span>language : </span>
+            <span className="text-gray-300">language : </span>
             <span className="px-3 py-1 text-sm font-medium text-indigo-400 
                           bg-indigo-900 rounded-full">
               {template.language}
@@ -344,14 +347,13 @@ export default function TemplateDetail() {
           </div>
           {template.parentId && (
             <div className="mt-4 text-gray-400">
-              <span>Forked from </span>
+              <span className="text-gray-300">Forked from </span>
               <button
-                onClick={() => router.push(`/template/${template.parentId}`)}
+                onClick={() => router.push(`/templateview/${template.parentId}`)}
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 parent template →
               </button>
-
             </div>
           )}
         </div>

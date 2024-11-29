@@ -4,8 +4,7 @@ import { UserContext } from "@/context/UserContext";
 import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
 
-
-export default function() {
+export default function BlogDetail() {
   const router = useRouter();
   const [id, setId] = useState<number | null>(null);
   const { user, loading, login } = useContext(UserContext);
@@ -84,6 +83,10 @@ export default function() {
   return (
     <>
       <NavBar />
+      <button
+            onClick={() => router.back()}
+            className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
+          ></button>
       {router.isReady && id ? <BlogPost id={id}/> : <h1>loading</h1>}
     </>
     

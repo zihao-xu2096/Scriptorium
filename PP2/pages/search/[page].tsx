@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { getAuthorName } from 'utils/authors';
 import { refreshAccessToken } from 'utils/refresh';
 
@@ -225,19 +225,19 @@ export default function SearchTemplates() {
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
-            className="p-3 bg-gray-800 border-gray-700 text-white rounded-lg"
+            className="p-3 bg-gray-800 border-gray-700 text-white rounded-lg"  // Added text-white
           >
-            <option value="language">Language</option>
-            <option value="tag">Tag</option>
-            <option value="id">TemplateID</option>
-            <option value="authorid">AuthorID</option>
+            <option value="language" className="text-white">Language</option>
+            <option value="tag" className="text-white">Tag</option>
+            <option value="templateName" className="text-white">Title</option>
+            <option value="authorName" className="text-white">Author</option>
           </select>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search by ${searchType}...`}
-            className="flex-1 p-3 bg-gray-800 border-gray-700 text-white 
+            className="flex-1 p-3 bg-gray-800 border-gray-700 text-white  // Added text-white
             placeholder-gray-400 rounded-lg shadow-sm 
             focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
@@ -251,16 +251,18 @@ export default function SearchTemplates() {
             Search
           </button>
         </form>
-        {/* Seed Button - Only show if access token exists */}
-        {currentPage === 1 && (
+        <div className="flex justify-between items-center mb-8">
+          <span></span>
           <button
-            onClick={handleSeedDatabase}
-            className="px-6 py-3 mb-8 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900"
+            onClick={() => router.push('/newtemplate')}
+            className="px-6 py-3 bg-emerald-600 text-white font-medium rounded-lg 
+                       hover:bg-emerald-700 focus:outline-none focus:ring-2 
+                       focus:ring-offset-2 focus:ring-blue-500 
+                       focus:ring-offset-gray-900"
           >
-            Add Sample Templates
+            + New Template
           </button>
-        )}
-
+        </div>
         {/* User's Templates Section - Only show on first page */}
         {currentPage === 1 && userTemplates.length > 0 && (
           <div className="mb-12 bg-rose-900/30 rounded-xl p-6 border border-rose-800/50">
@@ -279,15 +281,14 @@ export default function SearchTemplates() {
               {userTemplates.map((template) => (
                 <Link
                   key={template.id}
-                  href={`/template/${template.id}`}
+                  href={`/templateview/${template.id}`}
                   className="block"
                 >
                   <div
                     key={template.id}
-                    // Updated card background and hover effects
-                    className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                       hover:shadow-lg transition-shadow duration-300 
-                       border border-gray-700"
+                    className="bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-[1.02] 
+                  transform transition-all duration-300 border border-gray-700 
+                  flex flex-col h-full"
                   >
                     {/* Template Image */}
                     <div className="aspect-w-16 aspect-h-9">
@@ -314,10 +315,13 @@ export default function SearchTemplates() {
                       <p className="text-gray-400 text-sm mb-4">
                         {template.description}
                       </p>
-                      <div className="mb-2">
-                        <span>tags : </span>
-                        {template.tags.map((tag: String) => (
-                          <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                      <div className="mb-2 flex flex-wrap gap-1">
+                        <span className="text-gray-300">tags : </span>
+                        {template.tags.map((tag: String, index: number) => (
+                          <span
+                            key={`${template.id}-${tag}-${index}`}
+                            className="px-3 py-0.5 my-0.5 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                          >
                             {tag}
                           </span>
                         ))}
@@ -364,15 +368,14 @@ export default function SearchTemplates() {
             {displayedTemplates.map((template) => (
               <Link
                 key={template.id}
-                href={`/template/${template.id}`}
+                href={`/templateview/${template.id}`}
                 className="block"
               >
                 <div
                   key={template.id}
-                  // Updated card background and hover effects
-                  className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                     hover:shadow-lg transition-shadow duration-300 
-                     border border-gray-700"
+                  className="bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-[1.02] 
+                  transform transition-all duration-300 border border-gray-700 
+                  flex flex-col h-full"
                 >
                   {/* Template Image */}
                   <div className="aspect-w-16 aspect-h-9">
@@ -399,10 +402,13 @@ export default function SearchTemplates() {
                     <p className="text-gray-400 text-sm mb-4">
                       {template.description}
                     </p>
-                    <div className="mb-2">
-                      <span>tags : </span>
-                      {template.tags.map((tag: String) => (
-                        <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      <span className="text-gray-300">tags : </span>
+                      {template.tags.map((tag: String, index: number) => (
+                        <span
+                          key={`${template.id}-${tag}-${index}`}
+                          className="px-3 py-0.5 my-0.5 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                        >
                           {tag}
                         </span>
                       ))}

@@ -33,11 +33,8 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/newtemplate" className="text-white hover:text-gray-300">
-                Create
-              </Link>
               {user.userType === "ADMIN" &&
-              <Link href="/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+              <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 Reports
               </Link>}
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">

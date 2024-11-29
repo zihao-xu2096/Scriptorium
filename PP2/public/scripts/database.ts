@@ -247,6 +247,7 @@ interface User {
   }
   
   export {
-    createTemplate, createUser, deleteTemplate, deleteUser,
-    getTemplates, getUser, updateTemplate, updateUser
+  createTemplate, createUser, deleteTemplate, deleteUser,
+  getTemplates, getUser, updateTemplate, updateUser
 };
+
