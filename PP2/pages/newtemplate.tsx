@@ -36,7 +36,7 @@ export default function TemplateDetail() {
       const payload = JSON.parse(atob(accessToken.split('.')[1]));
       const authorId = payload.userId;
   
-      const response = await fetch('/api/Template', {
+      const response = await fetch('/api/template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

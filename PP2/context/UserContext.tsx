@@ -60,6 +60,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                   'Authorization': `Bearer ${newToken}`,
                 },
               });
+              if (!response.ok) {
+                logout();
+              }
             }
           } else {
             setUser(null);
