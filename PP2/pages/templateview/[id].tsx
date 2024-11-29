@@ -33,7 +33,6 @@ export default function TemplateDetail() {
   const [runError, setRunError] = useState<string | null>(null);
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
-
   useEffect(() => {
     fetchCurrentUserID();
   }, [])
@@ -149,6 +148,16 @@ export default function TemplateDetail() {
       if (!template) {
         throw new Error('Template not found');
       }
+      const data = {
+        title: template.title,
+        explanation: template.explanation,
+        language: template.language,
+        code: editedCode,
+        authorId: currentUserID,
+        tags: template.tags,
+        parentId: template.id
+      }
+
       const accessToken = localStorage.getItem('accessToken');
       const response = await fetch(`/api/Template`, {
         method: 'POST',
@@ -156,22 +165,13 @@ export default function TemplateDetail() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          title: template.title,
-          explanation: template.explanation,
-          language: template.language,
-          code: editedCode,
-          authorId: currentUserID,
-          tags: template.tags,
-          parentId: template.id
-          // tags: template.tags
-        }),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {
         const newTemplate = await response.json();
         if (confirm("Successfully forked! Would you like to go to your new forked template?")) {
-          router.push(`/template/${newTemplate.template.id}`);
+          router.push(`/templateview/${newTemplate.template.id}`);
         }
       } else {
         const { success } = await refreshAccessToken();
@@ -346,7 +346,7 @@ export default function TemplateDetail() {
             <div className="mt-4 text-gray-400">
               <span>Forked from </span>
               <button
-                onClick={() => router.push(`/template/${template.parentId}`)}
+                onClick={() => router.push(`/templateview/${template.parentId}`)}
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 parent template →

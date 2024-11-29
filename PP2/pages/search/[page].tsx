@@ -252,15 +252,7 @@ export default function SearchTemplates() {
           </button>
         </form>
         <div className="flex justify-between items-center mb-8">
-          {/* Seed Button - Only show if access token exists */}
-          {currentPage === 1 && (
-            <button
-              onClick={handleSeedDatabase}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900"
-            >
-              Add Sample Templates
-            </button>
-          )}
+          <span></span>
           <button
             onClick={() => router.push('/newtemplate')}
             className="px-6 py-3 bg-emerald-600 text-white font-medium rounded-lg 
@@ -289,15 +281,14 @@ export default function SearchTemplates() {
               {userTemplates.map((template) => (
                 <Link
                   key={template.id}
-                  href={`/template/${template.id}`}
+                  href={`/templateview/${template.id}`}
                   className="block"
                 >
                   <div
                     key={template.id}
-                    // Updated card background and hover effects
-                    className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                       hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 
-                       border border-gray-700"
+                    className="bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-[1.02] 
+                  transform transition-all duration-300 border border-gray-700 
+                  flex flex-col h-full"
                   >
                     {/* Template Image */}
                     <div className="aspect-w-16 aspect-h-9">
@@ -324,12 +315,12 @@ export default function SearchTemplates() {
                       <p className="text-gray-400 text-sm mb-4">
                         {template.description}
                       </p>
-                      <div className="mb-2">
+                      <div className="mb-2 flex flex-wrap gap-1">
                         <span>tags : </span>
                         {template.tags.map((tag: String, index: number) => (
                           <span
                             key={`${template.id}-${tag}-${index}`}
-                            className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                            className="px-3 py-0.5 my-0.5 text-sm font-medium text-green-400 bg-green-900 rounded-full"
                           >
                             {tag}
                           </span>
@@ -377,15 +368,14 @@ export default function SearchTemplates() {
             {displayedTemplates.map((template) => (
               <Link
                 key={template.id}
-                href={`/template/${template.id}`}
+                href={`/templateview/${template.id}`}
                 className="block"
               >
                 <div
                   key={template.id}
-                  // Updated card background and hover effects
-                  className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                  hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 
-                  border border-gray-700"
+                  className="bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-[1.02] 
+                  transform transition-all duration-300 border border-gray-700 
+                  flex flex-col h-full"
                 >
                   {/* Template Image */}
                   <div className="aspect-w-16 aspect-h-9">
@@ -412,12 +402,12 @@ export default function SearchTemplates() {
                     <p className="text-gray-400 text-sm mb-4">
                       {template.description}
                     </p>
-                    <div className="mb-2">
+                    <div className="mb-2 flex flex-wrap gap-1">
                       <span>tags : </span>
                       {template.tags.map((tag: String, index: number) => (
                         <span
                           key={`${template.id}-${tag}-${index}`}
-                          className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                          className="px-3 py-0.5 my-0.5 text-sm font-medium text-green-400 bg-green-900 rounded-full"
                         >
                           {tag}
                         </span>
