@@ -229,8 +229,8 @@ export default function SearchTemplates() {
           >
             <option value="language">Language</option>
             <option value="tag">Tag</option>
-            <option value="id">TemplateID</option>
-            <option value="authorid">AuthorID</option>
+            <option value="templateName">Title</option>
+            <option value="authorName">Author</option>
           </select>
           <input
             type="text"
@@ -251,16 +251,26 @@ export default function SearchTemplates() {
             Search
           </button>
         </form>
-        {/* Seed Button - Only show if access token exists */}
-        {currentPage === 1 && (
+        <div className="flex justify-between items-center mb-8">
+          {/* Seed Button - Only show if access token exists */}
+          {currentPage === 1 && (
+            <button
+              onClick={handleSeedDatabase}
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900"
+            >
+              Add Sample Templates
+            </button>
+          )}
           <button
-            onClick={handleSeedDatabase}
-            className="px-6 py-3 mb-8 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-gray-900"
+            onClick={() => router.push('/newtemplate')}
+            className="px-6 py-3 bg-emerald-600 text-white font-medium rounded-lg 
+                       hover:bg-emerald-700 focus:outline-none focus:ring-2 
+                       focus:ring-offset-2 focus:ring-blue-500 
+                       focus:ring-offset-gray-900"
           >
-            Add Sample Templates
+            + New Template
           </button>
-        )}
-
+        </div>
         {/* User's Templates Section - Only show on first page */}
         {currentPage === 1 && userTemplates.length > 0 && (
           <div className="mb-12 bg-rose-900/30 rounded-xl p-6 border border-rose-800/50">
@@ -286,7 +296,7 @@ export default function SearchTemplates() {
                     key={template.id}
                     // Updated card background and hover effects
                     className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                       hover:shadow-lg transition-shadow duration-300 
+                       hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 
                        border border-gray-700"
                   >
                     {/* Template Image */}
@@ -316,8 +326,11 @@ export default function SearchTemplates() {
                       </p>
                       <div className="mb-2">
                         <span>tags : </span>
-                        {template.tags.map((tag: String) => (
-                          <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                        {template.tags.map((tag: String, index: number) => (
+                          <span
+                            key={`${template.id}-${tag}-${index}`}
+                            className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                          >
                             {tag}
                           </span>
                         ))}
@@ -371,8 +384,8 @@ export default function SearchTemplates() {
                   key={template.id}
                   // Updated card background and hover effects
                   className="bg-gray-800 rounded-lg shadow-md overflow-hidden 
-                     hover:shadow-lg transition-shadow duration-300 
-                     border border-gray-700"
+                  hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 
+                  border border-gray-700"
                 >
                   {/* Template Image */}
                   <div className="aspect-w-16 aspect-h-9">
@@ -401,8 +414,11 @@ export default function SearchTemplates() {
                     </p>
                     <div className="mb-2">
                       <span>tags : </span>
-                      {template.tags.map((tag: String) => (
-                        <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                      {template.tags.map((tag: String, index: number) => (
+                        <span
+                          key={`${template.id}-${tag}-${index}`}
+                          className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                        >
                           {tag}
                         </span>
                       ))}
