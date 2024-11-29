@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { ThumbUp, ThumbDown, Reply } from '@mui/icons-material';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Comment } from '@prisma/client';
+import { Comment as CommentElement } from './Comment';
 
 interface CommentSectionProps {
   blogId: number;
 }
 
-interface CommentWithReplies extends Comment {
+export interface CommentWithReplies extends Comment {
   replies: CommentWithReplies[];
   _count: {
     replies: number;
@@ -107,23 +108,15 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
   const renderComments = () => {
     return (
       <div className="space-y-4">
-        {comments.map((reply) => (
-          <div
-            key={reply.id}
-            className="space-y-2"
-            onClick={() => {
-              if (mainComment) {
-                setHistory([...history, { ...mainComment, pageNumber: pageNum }]);
-              }
-              setMainComment(reply);
-              setPageNum(1); // Always reset to page 1 when diving into replies
-            }}
-          >
-            <div className="bg-gray-500 p-4 rounded-lg shadow-sm hover:bg-gray-600 my-2 cursor-pointer transition-all duration-300">
-              <p>{reply.content}</p>
-            </div>
-          </div>
-        ))}
+        {comments.map((reply) => 
+          <CommentElement comment={reply} commentType='BOTTOM' onClick={() => {
+            if (mainComment) {
+              setHistory([...history, { ...mainComment, pageNumber: pageNum }]);
+            }
+            setMainComment(reply);
+            setPageNum(1); // Always reset to page 1 when diving into replies
+          }} />
+        )}
       </div>
     );
   };
@@ -150,22 +143,14 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
           {history.length > 0 && (
             <div className="space-y-4 mb-6">
               {history.map((ancestor, index) => (
-                <div key={ancestor.id} className="bg-gray-500 p-3 rounded-md">
-                  <div>{ancestor.content}</div>
-                </div>
+                <CommentElement comment={ancestor} commentType='ANCESTOR' />
               ))}
             </div>
           )}
 
           {/* Main Level (Top-level comments) */}
           {mainComment && (
-            <div className="bg-gray-400 p-4 rounded-md shadow-sm mb-6">
-              <div className="space-y-2">
-                <div className="bg-gray-500 p-3 rounded-md">
-                  <p>{mainComment.content}</p>
-                </div>
-              </div>
-            </div>
+            <CommentElement comment={mainComment} commentType='MAIN' />
           )}
 
           {/* Render replies and input */}

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { Editable, withReact, useSlate, Slate, RenderElementProps, RenderLeafProps, ReactEditor, useFocused } from 'slate-react'
 import {
@@ -31,9 +31,26 @@ import InsertLinkIcon from '@mui/icons-material/InsertLink';
 import Link from 'next/link'
 import { LinkModal } from './LinkModal'
 import { Button } from './Button'
+import { Post } from '@prisma/client';
+import { UserContext } from '@/context/UserContext'
 
 interface Options {
   [key: string]: string;
+}
+
+export interface PostWithDisplay extends Post {
+  tags: {
+      label: string;
+  }[],
+  createdBy: {
+    firstName: string;
+    lastName: string;
+  }, votes: {
+    id: number;
+    userId: number;
+    voteType: string;
+    postId: number;
+  }[];
 }
 
 const HOTKEYS: Options = {
@@ -126,9 +143,11 @@ declare module 'slate' {
 interface EditorProps {
   readOnly: boolean
   initialValue: Descendant[]
+  post: PostWithDisplay
 }
 
-export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
+export function RichTextEditor ({readOnly, initialValue, post }: EditorProps) {
+  const { user, loading, login } = useContext(UserContext);
   const renderElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
   const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
   const [editor] = useState(() => withInlines(withHistory(withReact(createEditor()))));
@@ -244,9 +263,10 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
         }
       />
     </Slate>
+    { !readOnly &&
     <button onClick={async () => {
       
-      const res = await fetch(`/api/blog-posts/4`, {
+      const res = await fetch(`/api/blog-posts/${post.id}`, {
         method: "PUT",
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
@@ -261,7 +281,7 @@ export function RichTextEditor ({readOnly, initialValue}: EditorProps) {
 
       const message = await res.json();
       console.log(message)
-    }}>submit</button>
+    }}>submit</button>}
     <LinkModal onInsert={insertLink(editor)} ref={dialogRef} />
     </>
   )

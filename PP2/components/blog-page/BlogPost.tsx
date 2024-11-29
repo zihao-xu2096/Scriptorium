@@ -10,7 +10,7 @@ interface PostProps {
   id: number
 }
 
-interface PostWithDisplay extends Post {
+export interface PostWithDisplay extends Post {
   tags: {
       label: string;
   }[],
@@ -68,7 +68,7 @@ export const BlogPost = function ({id}: PostProps) {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{post.title}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">{post.description}</p>
-          <RichTextEditor readOnly={false} initialValue={JSON.parse(post.content)} />
+          <RichTextEditor post={post} readOnly={true} initialValue={JSON.parse(post.content)} />
           </div>
         </div>
         <CommentSection blogId={id} />

@@ -38,75 +38,6 @@ export const Dashboard = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    const fetchUserData = async (token: string) => {
-      try {
-        let response = await fetch('/api/profile', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.ok) {
-          if (refreshToken) {
-            const newToken = await fetchRefreshToken(refreshToken);
-            if (!newToken) {
-              router.push('/login');
-              return;
-            } else {
-              localStorage.setItem('accessToken', newToken);
-              response = await fetch('/api/profile', {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${newToken}`,
-                },
-              });
-            }
-          } else {
-            router.push('/login');
-            return;
-          }
-        }
-  
-        const userData: UserPayload = await response.json();
-        login(userData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    const fetchRefreshToken = async (token: string) => {
-      try {
-        const response = await fetch('/api/refresh', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.ok) {
-          return null;
-        }
-  
-
-        const accessToken = await response.json();
-        return accessToken.accessToken;
-      } catch (error) {
-        console.error(error);
-      } 
-    };
-
-    if (accessToken) {
-        fetchUserData(accessToken);
-    } else {
-        router.push('/login');
-    }
-  }, [])
-
-  useEffect(() => {
     const fetchData = async () => {
       if (user) {
         try {
@@ -125,7 +56,7 @@ export const Dashboard = () => {
           ]);
 
           if (responses.some((value) => value.status === 401)) {
-            router.push('/login');
+            router.push('/');
           } else if (responses.some(value => !value.ok)) {
             console.log(responses)
           }
