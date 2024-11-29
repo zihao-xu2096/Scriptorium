@@ -351,7 +351,6 @@ export default function TemplateDetail() {
               >
                 parent template →
               </button>
-
             </div>
           )}
         </div>
