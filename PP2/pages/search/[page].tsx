@@ -316,7 +316,7 @@ export default function SearchTemplates() {
                         {template.description}
                       </p>
                       <div className="mb-2 flex flex-wrap gap-1">
-                        <span>tags : </span>
+                        <span className="text-gray-300">tags : </span>
                         {template.tags.map((tag: String, index: number) => (
                           <span
                             key={`${template.id}-${tag}-${index}`}
@@ -403,7 +403,7 @@ export default function SearchTemplates() {
                       {template.description}
                     </p>
                     <div className="mb-2 flex flex-wrap gap-1">
-                      <span>tags : </span>
+                      <span className="text-gray-300">tags : </span>
                       {template.tags.map((tag: String, index: number) => (
                         <span
                           key={`${template.id}-${tag}-${index}`}

@@ -262,7 +262,7 @@ export default function TemplateDetail() {
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
           <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
           <div className="mb-2">
-            <span>tags : </span>
+            <span className="text-gray-300">tags : </span>
             {template.tags.map((tag: String) => (
               <span 
               key={tag.toString()}
