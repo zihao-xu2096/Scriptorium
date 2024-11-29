@@ -154,8 +154,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (tag) {
         whereClause.tags = {
           some: {
-            name: tag.toLowerCase(),
-          },
+            name: {
+              contains: tag
+            }
+          }
         };
       }
       if (templateName) {
