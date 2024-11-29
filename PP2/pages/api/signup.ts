@@ -84,7 +84,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName,
             lastName,
             phoneNum: phone,
-            avatarUrl: `public/avatars/${randomAvatar}`,
+            avatarUrl: `/avatars/${randomAvatar}`,
           },
           select: {
             id: true,
