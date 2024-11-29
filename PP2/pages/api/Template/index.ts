@@ -1,6 +1,6 @@
-import { protectedRoute } from '@/middleware/auth';
-import { prisma } from '@/prisma/prisma';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { protectedRoute } from "@/middleware/auth";
+import { prisma } from "@/prisma/prisma";
+import { NextApiRequest, NextApiResponse } from "next";
 
 interface CreateTemplateBody {
   title: string;
@@ -17,27 +17,38 @@ interface QueryParams {
   authorId?: string;
   language?: string;
   tag?: string;
+  templateName?: string; // New parameter
+  authorName?: string; // New parameter
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     try {
       // Validate required fields
-      const { title, explanation, language, code, authorId, tags, parentId }: CreateTemplateBody = req.body;
-      
+      const {
+        title,
+        explanation,
+        language,
+        code,
+        authorId,
+        tags,
+        parentId,
+      }: CreateTemplateBody = req.body;
+
       if (!title || !explanation || !language || !code || !authorId) {
-        return res.status(400).json({ 
-          error: 'Missing required fields: title, explanation, language, code, and authorId are required' 
+        return res.status(400).json({
+          error:
+            "Missing required fields: title, explanation, language, code, and authorId are required",
         });
-      } 
+      }
 
       // Verify author exists
       const authorExists = await prisma.user.findUnique({
-        where: { id: authorId }
+        where: { id: authorId },
       });
 
       if (!authorExists) {
-        return res.status(400).json({ error: 'Author ID not found' });
+        return res.status(400).json({ error: "Author ID not found" });
       }
 
       let parentTemplate = null;
@@ -45,7 +56,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // If parentId is provided, verify the template exists
       if (parentId) {
         parentTemplate = await prisma.codeTemplate.findUnique({
-          where: { id: parentId }
+          where: { id: parentId },
         });
       }
 
@@ -57,21 +68,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           language: language.toLowerCase(),
           code,
           author: {
-            connect: { id: authorId }
+            connect: { id: authorId },
           },
-          ...(parentTemplate && {  // Only include parent if parentTemplate exists
+          ...(parentTemplate && {
+            // Only include parent if parentTemplate exists
             parent: {
-              connect: { id: parentTemplate.id }
-            }
+              connect: { id: parentTemplate.id },
+            },
           }),
           ...(tags && {
             tags: {
-              connectOrCreate: tags.map(tag => ({
+              connectOrCreate: tags.map((tag) => ({
                 where: { name: tag },
-                create: { name: tag }
-              }))
-            }
-          })
+                create: { name: tag },
+              })),
+            },
+          }),
         },
         include: {
           author: {
@@ -79,8 +91,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
+              email: true,
+            },
           },
           parent: {
             select: {
@@ -90,39 +102,43 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
                 select: {
                   id: true,
                   firstName: true,
-                  lastName: true
-                }
-              }
-            }
+                  lastName: true,
+                },
+              },
+            },
           },
-          tags: true
-        }
+          tags: true,
+        },
       });
 
       if (parentTemplate) {
         res.status(201).json({
           message: `Template successfully forked from "${parentTemplate.title}".`,
-          template
+          template,
         });
       } else {
         res.status(201).json({
-          message: 'Template successfully created',
-          template
+          message: "Template successfully created",
+          template,
         });
       }
-
     } catch (error) {
-      console.error('Error creating template:', error);
-      res.status(500).json({ error: 'Error creating template' });
+      console.error("Error creating template:", error);
+      res.status(500).json({ error: "Error creating template" });
     }
-  }
-
-  else if (req.method === 'GET') {
+  } else if (req.method === "GET") {
     try {
-      const { id, authorId, language, tag }: QueryParams = req.query;
+      const {
+        id,
+        authorId,
+        language,
+        tag,
+        templateName,
+        authorName,
+      }: QueryParams = req.query;
 
       let whereClause: any = {};
-      
+
       // Build where clause based on provided query parameters
       if (id) {
         whereClause.id = parseInt(id);
@@ -132,16 +148,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
       if (language) {
         whereClause.language = {
-          contains: language.toLowerCase()
+          contains: language.toLowerCase(),
         };
       }
       if (tag) {
         whereClause.tags = {
           some: {
-            name: {
-              contains: tag.toLowerCase()
+            name: tag.toLowerCase(),
+          },
+        };
+      }
+      if (templateName) {
+        whereClause.title = {
+          contains: templateName,
+        };
+      }
+      if (authorName) {
+        whereClause.author = {
+          OR: [
+            { firstName: { contains: authorName } },
+            { lastName: { contains: authorName } },
+            {
+              AND: [
+                { firstName: { contains: authorName.split(' ')[0] || '' } },
+                { lastName: { contains: authorName.split(' ')[1] || '' } }
+              ]
             }
-          }
+          ],
         };
       }
 
@@ -153,37 +186,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
+              email: true,
+            },
           },
           tags: true,
           savedBy: {
             select: {
-              id: true
-            }
-          }
+              id: true,
+            },
+          },
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: "desc",
+        },
       });
 
       if (id && templates.length === 0) {
-        return res.status(404).json({ error: 'Template not found' });
+        return res.status(404).json({ error: "Template not found" });
       }
 
       res.status(200).json(templates);
-
     } catch (error) {
-      console.error('Error retrieving templates:', error);
-      res.status(500).json({ error: 'Error retrieving templates' });
+      console.error("Error retrieving templates:", error);
+      res.status(500).json({ error: "Error retrieving templates" });
     }
-  }
-
-  else {
-    res.setHeader('Allow', ['GET', 'POST']);
+  } else {
+    res.setHeader("Allow", ["GET", "POST"]);
     res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 }
 
-export default protectedRoute(handler, ['POST']);
+export default protectedRoute(handler, ["POST"]);

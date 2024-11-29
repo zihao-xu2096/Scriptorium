@@ -229,8 +229,8 @@ export default function SearchTemplates() {
           >
             <option value="language">Language</option>
             <option value="tag">Tag</option>
-            <option value="id">TemplateID</option>
-            <option value="authorid">AuthorID</option>
+            <option value="templateName">Title</option>
+            <option value="authorName">Author</option>
           </select>
           <input
             type="text"
