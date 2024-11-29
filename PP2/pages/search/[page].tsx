@@ -15,6 +15,11 @@ interface Template {
   authorId: number;
 }
 
+interface Tag {
+  id: string;
+  name: string;
+}
+
 // Add these constants at the top
 const ITEMS_PER_PAGE = 21; // 3x7 grid
 const USER_TEMPLATES_LIMIT = 6;
@@ -53,6 +58,7 @@ export default function SearchTemplates() {
       // Fetch author details for each template
       const templatesWithAuthors = await Promise.all(
         templatesData.map(async (template: any) => {
+          const tagNames = template.tags?.map((tag: Tag) => tag.name) || [];
           try {
             const authorName = await getAuthorName(template.authorId);
 
@@ -63,7 +69,8 @@ export default function SearchTemplates() {
               imageUrl: '/background/wave.jpg',
               language: template.language,
               author: authorName,
-              authorId: template.authorId
+              authorId: template.authorId,
+              tags: tagNames
             };
           } catch (error) {
             console.error('Error fetching author details:', error);
@@ -74,7 +81,8 @@ export default function SearchTemplates() {
               imageUrl: '/background/wave.jpg',
               language: template.language,
               author: 'Unknown Author',
-              authorId: template.authorId
+              authorId: template.authorId,
+              tags: tagNames
             };
           }
         })
@@ -284,7 +292,7 @@ export default function SearchTemplates() {
                     </div>
                     {/* Template Info */}
                     <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-start justify-between mb-2">
                         {/* Updated text colors */}
                         <h3 className="text-lg font-semibold text-white">
                           {template.title}
@@ -299,6 +307,14 @@ export default function SearchTemplates() {
                       <p className="text-gray-400 text-sm mb-4">
                         {template.description}
                       </p>
+                      <div className="mb-2">
+                        <span>tags : </span>
+                        {template.tags.map((tag: String) => (
+                          <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                       <div className="flex items-center justify-between">
                         {/* Updated stats color */}
                         <span className="text-sm text-gray-500">
@@ -376,6 +392,14 @@ export default function SearchTemplates() {
                     <p className="text-gray-400 text-sm mb-4">
                       {template.description}
                     </p>
+                    <div className="mb-2">
+                      <span>tags : </span>
+                      {template.tags.map((tag: String) => (
+                        <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                     <div className="flex items-center justify-between">
                       {/* Updated stats color */}
                       <span className="text-sm text-gray-500">

@@ -16,6 +16,7 @@ interface Template {
 }
 
 interface Tag {
+  id: string;
   name: string;
 }
 
@@ -89,8 +90,6 @@ export default function TemplateDetail() {
         tags: tagNames
       });
 
-      // console.log(templates)
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load template');
     } finally {
@@ -99,7 +98,7 @@ export default function TemplateDetail() {
 
   };
 
-  const handleSave = async () => { 
+  const handleSave = async () => {
     try {
       if (!template) {
         throw new Error('Template not found');
@@ -145,7 +144,7 @@ export default function TemplateDetail() {
   };
 
   //if the user needs to fork
-  const handleFork = async () => { 
+  const handleFork = async () => {
     try {
       if (!template) {
         throw new Error('Template not found');
@@ -254,8 +253,17 @@ export default function TemplateDetail() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
           <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
-
+          <div className="mb-2">
+            <span>tags : </span>
+            {template.tags.map((tag: String) => (
+              <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
+              bg-green-900 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
           <div className="mb-6">
+            <span>language : </span>
             <span className="px-3 py-1 text-sm font-medium text-indigo-400 
                           bg-indigo-900 rounded-full">
               {template.language}
@@ -268,20 +276,20 @@ export default function TemplateDetail() {
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
             {isEditing ? (
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  {Number(template.authorId) === Number(currentUserID) ? 'Save' : 'Save and Fork'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Edit
-                </button>
-              )}
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                {Number(template.authorId) === Number(currentUserID) ? 'Save' : 'Save and Fork'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Edit
+              </button>
+            )}
           </div>
           <div className="bg-gray-900 p-4 rounded-lg">
             {isEditing ? (
@@ -329,13 +337,13 @@ export default function TemplateDetail() {
           {template.parentId && (
             <div className="mt-4 text-gray-400">
               <span>Forked from </span>
-              <button 
+              <button
                 onClick={() => router.push(`/template/${template.parentId}`)}
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 parent template →
               </button>
-              
+
             </div>
           )}
         </div>
