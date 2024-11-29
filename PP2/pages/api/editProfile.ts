@@ -19,7 +19,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       const phoneRegex = /^\d{10}$/;
       if (!phoneRegex.test(phoneNum)) {
         return res.status(400).json({
-          message: 'Phone number must be 10 digits.',
+          message: 'Phone number must be 10 digits and numerical only.',
         });
       }
       updateData.phoneNum = phoneNum;
