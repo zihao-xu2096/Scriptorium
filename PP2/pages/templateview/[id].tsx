@@ -264,17 +264,17 @@ export default function TemplateDetail() {
           <div className="mb-2">
             <span className="text-gray-300">tags : </span>
             {template.tags.map((tag: String) => (
-              <span 
-              key={tag.toString()}
-              className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
+              <span
+                key={tag.toString()}
+                className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
               bg-green-900 rounded-full"
-            >
-              {tag}
-            </span>
+              >
+                {tag}
+              </span>
             ))}
           </div>
           <div className="mb-6">
-            <span>language : </span>
+            <span className="text-gray-300">language : </span>
             <span className="px-3 py-1 text-sm font-medium text-indigo-400 
                           bg-indigo-900 rounded-full">
               {template.language}
@@ -347,7 +347,7 @@ export default function TemplateDetail() {
           </div>
           {template.parentId && (
             <div className="mt-4 text-gray-400">
-              <span>Forked from </span>
+              <span className="text-gray-300">Forked from </span>
               <button
                 onClick={() => router.push(`/templateview/${template.parentId}`)}
                 className="text-blue-400 hover:text-blue-300 underline"

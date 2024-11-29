@@ -225,19 +225,19 @@ export default function SearchTemplates() {
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
-            className="p-3 bg-gray-800 border-gray-700 text-white rounded-lg"
+            className="p-3 bg-gray-800 border-gray-700 text-white rounded-lg"  // Added text-white
           >
-            <option value="language">Language</option>
-            <option value="tag">Tag</option>
-            <option value="templateName">Title</option>
-            <option value="authorName">Author</option>
+            <option value="language" className="text-white">Language</option>
+            <option value="tag" className="text-white">Tag</option>
+            <option value="templateName" className="text-white">Title</option>
+            <option value="authorName" className="text-white">Author</option>
           </select>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search by ${searchType}...`}
-            className="flex-1 p-3 bg-gray-800 border-gray-700 text-white 
+            className="flex-1 p-3 bg-gray-800 border-gray-700 text-white  // Added text-white
             placeholder-gray-400 rounded-lg shadow-sm 
             focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
