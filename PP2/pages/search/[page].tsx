@@ -326,8 +326,11 @@ export default function SearchTemplates() {
                       </p>
                       <div className="mb-2">
                         <span>tags : </span>
-                        {template.tags.map((tag: String) => (
-                          <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                        {template.tags.map((tag: String, index: number) => (
+                          <span
+                            key={`${template.id}-${tag}-${index}`}
+                            className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                          >
                             {tag}
                           </span>
                         ))}
@@ -411,8 +414,11 @@ export default function SearchTemplates() {
                     </p>
                     <div className="mb-2">
                       <span>tags : </span>
-                      {template.tags.map((tag: String) => (
-                        <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                      {template.tags.map((tag: String, index: number) => (
+                        <span
+                          key={`${template.id}-${tag}-${index}`}
+                          className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full"
+                        >
                           {tag}
                         </span>
                       ))}
