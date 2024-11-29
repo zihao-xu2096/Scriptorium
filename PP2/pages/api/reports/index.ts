@@ -32,6 +32,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
     const pageInt = typeof(page) === "string" ? parseInt(page) : page;
     const limitInt = typeof(limit) === "string" ? parseInt(limit) : limit;
 
+    // Fetches reported Posts
     const posts = await prisma.post.findMany({ 
       where: {
         reports: {
@@ -46,6 +47,7 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       }
     });
 
+    // Fetches reported Comments
     const comments = await prisma.comment.findMany({ 
       where: {
         reports: {
@@ -60,12 +62,13 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       }
     });
 
+
     const combined: (HasReports & (Post | Comment))[] = [...posts, ...comments];
     combined.sort((a, b) => {
       return b._count.reports - a._count.reports;
     });
 
-    res.status(200).json(combined.slice((pageInt - 1) * limitInt, pageInt * limitInt));
+    res.status(200).json(combined);
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }
