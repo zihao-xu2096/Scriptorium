@@ -21,25 +21,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // TODO: Need to check sessionID is the same as template.authorID
 
   if (req.method === "PUT") {
-    const { title, explanation, language, code, tags }: UpdateTemplateBody = req.body;
-
-    // Validate required fields
-    if (!title || !explanation || !language || !code) {
+    const updates: UpdateTemplateBody = req.body;
+  
+    // Validate that at least one field is being updated
+    if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({
-        error: "Missing required fields",
-        details: {
-          title: !title ? "Title is required" : null,
-          explanation: !explanation ? "Explanation is required" : null,
-          language: !language ? "Language is required" : null,
-          code: !code ? "Code is required" : null,
-        },
-      });
-    }
-
-    // Validate tags format if provided
-    if (tags && !Array.isArray(tags)) {
-      return res.status(400).json({
-        error: "Tags must be an array of strings",
+        error: "No update fields provided"
       });
     }
 
@@ -47,6 +34,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const existingTemplate = await prisma.codeTemplate.findUnique({
       where: { id: templateId },
     });
+
+    if (!existingTemplate) {
+      return res.status(404).json({ error: "Template not found" });
+    }
+
+    // Validate tags format if provided
+    if (updates.tags && !Array.isArray(updates.tags)) {
+      return res.status(400).json({
+        error: "Tags must be an array of strings",
+      });
+    }
 
     if (!existingTemplate) {
       return res.status(404).json({ error: "Template not found" });
