@@ -1,6 +1,5 @@
-import { UserContext } from "@/context/UserContext";
-import { FormEvent, useCallback, useRef, useState, KeyboardEvent, MouseEvent, forwardRef, MutableRefObject, ForwardedRef, useImperativeHandle, useEffect, useContext } from "react";
 import { CodeTemplate } from '@prisma/client';
+import { FormEvent, forwardRef, KeyboardEvent, MouseEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 type LinkModalProps = {
   onInsert: Function
@@ -32,7 +31,7 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
   useEffect((() => {
     const fetchCodeTemplates = async () => {
       try {
-        let response = await fetch(`/api/template?title=${search}`, {
+        let response = await fetch(`/api/Template?title=${search}`, {
           method: 'GET'
         });
   
