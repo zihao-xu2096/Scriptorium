@@ -31,9 +31,6 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/newtemplate" className="text-white hover:text-gray-300">
-                Create
-              </Link>
               {user.userType === "ADMIN" && 
               (<>
                 <Link href="/reports">Reports</Link>
