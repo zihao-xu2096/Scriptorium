@@ -174,7 +174,195 @@ async function createAdminUser() {
     }
 }
 
+async function populateDatabase() {
+  try {
+    console.log("Populating data...");
+
+    // Create Users
+    console.log("Creating Users...");
+    const userPassword = process.env.USER_PASSWORD || 'password123';
+
+    if (!userPassword) throw new Error('User password not provided');
+
+    const hashedPassword = await bcrypt.hash(userPassword, 10);
+
+    const users = await Promise.all(
+      Array.from({ length: 9 }, (_, i) =>
+        prisma.user.upsert({
+            where: { email: `user${i + 1}` },
+            update: {
+                password: hashedPassword,
+                updatedAt: new Date()
+            },
+            create: {
+                email: `user${i + 1}@example.com`,
+                password: hashedPassword,
+                firstName: `First${i + 1}`,
+                lastName: `Last${i + 1}`,
+                avatarUrl: `https://example.com/avatar${i + 1}.png`,
+                phoneNum: `12345678${i + 10}`,
+            }
+        })
+      )
+    );
+    console.log("Users created");
+
+    // Create Post Tags
+    console.log("Creating Post Tags...");
+    const postTags = await Promise.all(
+      Array.from({ length: 30 }, (_, i) =>
+        prisma.postTag.create({
+          data: {
+            label: `Tag${i + 1}`,
+          },
+        })
+      )
+    );
+    console.log("Post Tags created");
+
+    // Create Templates
+    console.log("Creating Templates...");
+    const languages = ["JavaScript", "Python", "C++", "Java", "C"];
+    const templates = await Promise.all(
+        Array.from({ length: 50 }, (_, i) => {
+            const language = languages[i % languages.length];
+            let codeSnippet;
+
+            switch (language) {
+            case "JavaScript":
+                codeSnippet = `console.log('Template ${i + 1}');`;
+                break;
+            case "Python":
+                codeSnippet = `print('Template ${i + 1}')`;
+                break;
+            case "C++":
+                codeSnippet = `#include <iostream>\nusing namespace std;\nint main() {\n  cout << "Template ${i + 1}" << endl;\n  return 0;\n}`;
+                break;
+            case "Java":
+                codeSnippet = `public class Template${i + 1} {\n  public static void main(String[] args) {\n    System.out.println("Template ${i + 1}");\n  }\n}`;
+                break;
+                case "C":
+                codeSnippet = `#include <stdio.h>\nint main() {\n  printf("Template ${i + 1}\\n");\n  return 0;\n}`;
+                break;
+            default:
+                codeSnippet = `console.log('Template ${i + 1}');`;
+            }
+
+            return prisma.codeTemplate.create({
+            data: {
+                title: `Template ${i + 1}`,
+                explanation: `Explanation for template ${i + 1}`,
+                language: language,
+                code: codeSnippet,
+                author: { connect: { id: users[i % users.length].id } },
+            },
+            });
+        })
+    );
+    console.log("Templates created");
+
+
+
+    // Create Posts for each user
+    console.log("Creating Posts...");
+    const posts = [];
+    for (const user of users) {
+        const numPosts = Math.floor(Math.random() * 5) + 1; // Random number of posts between 1 and 5
+        const userPosts = await Promise.all(
+            Array.from({ length: numPosts }, (_, i) => {
+            const postData = {
+                title: `Post ${i + 1} by ${user.firstName}`,
+                content: `This is the content of post ${i + 1}`,
+                description: `Description for post ${i + 1}`,
+                createdBy: { connect: { id: user.id } },
+                tags: {
+                connect: [
+                    { id: postTags[i % postTags.length].id },
+                    { id: postTags[(i + 1) % postTags.length].id },
+                ],
+                },
+                linkedTemplates: {
+                connect: [
+                    { id: templates[i % templates.length].id },
+                    { id: templates[(i + 1) % templates.length].id },
+                ],
+                },
+                upvotes: i * 10, // Simulating upvotes
+                downvotes: i * 2, // Simulating downvotes
+                votes: {
+                create: Array.from({ length: 3 }, (_, j) => ({
+                    voteType: j % 2 === 0 ? "UPVOTE" : "DOWNVOTE",
+                    user: { connect: { id: users[j % users.length].id } },
+                })),
+            },
+        };
+
+        // Randomly add reports to some posts
+        if (Math.random() < 0.3) { // 30% chance to add reports
+            const numReports = Math.floor(Math.random() * 8) + 1; // Random number of reports between 1 and 8
+            postData.reports = {
+            create: Array.from({ length: numReports }, (_, j) => ({
+                explanation: `Report ${j + 1} on post ${i + 1}`,
+                createdBy: { connect: { id: users[j % users.length].id } },
+            })),
+            };
+        }
+
+        return prisma.post.create({ data: postData });
+        })
+    );
+
+
+    // Create Comments for each post
+    console.log("Creating Comments...");
+    for (const post of posts) {
+        const numComments = Math.floor(Math.random() * 4) + 1; // Random number of comments between 1 and 4
+        await Promise.all(
+            Array.from({ length: numComments }, (_, i) => {
+            const commentData = {
+                content: `Comment ${i + 1} on post ${post.title}`,
+                post: { connect: { id: post.id } },
+                createdBy: { connect: { id: users[i % users.length].id } },
+                isHidden: i % 2 === 0, // Alternate between hidden and visible comments
+            };
+
+            // Randomly add reports to some comments
+            if (Math.random() < 0.3) { // 30% chance to add reports
+                const numReports = Math.floor(Math.random() * 5) + 1; // Random number of reports between 1 and 5
+                commentData.reports = {
+                create: Array.from({ length: numReports }, (_, j) => ({
+                    explanation: `Report ${j + 1} on comment ${i + 1}`,
+                    createdBy: { connect: { id: users[j % users.length].id } },
+                })),
+                };
+            }
+
+        return prisma.comment.create({ data: commentData });
+        })
+    );
+    }
+
+
+
+
+    posts.push(...userPosts);
+    }
+    console.log("Comments created");
+    console.log("Posts created");
+
+    console.log("Populating completed.");
+  } catch (error) {
+    console.error("Error populating database:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+
+
+
 createAdminUser();
+populateDatabase();
 EOF
 )
 
