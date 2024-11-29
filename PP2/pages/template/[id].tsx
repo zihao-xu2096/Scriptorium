@@ -251,6 +251,14 @@ export default function TemplateDetail() {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
+        >
+          <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
+          <span className="font-medium flex items-center">Back to Search</span>
+        </button>
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
           <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
           <div className="mb-2">

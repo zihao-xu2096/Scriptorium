@@ -210,7 +210,14 @@ export default function SearchTemplates() {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto mb-8">
-        {/* Changed text-gray-900 to text-white */}
+        <button
+          onClick={() => router.push('/profile')}
+          className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
+        >
+          <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
+          <span className="font-medium flex items-center">Back to Profile </span>
+        </button>
+
         <h1 className="text-3xl font-bold text-white mb-6">Find Templates</h1>
 
         {/* Search Form */}
