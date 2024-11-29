@@ -37,6 +37,9 @@ export default function RecentPosts() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [filter, setFilter] = useState<'all' | 'posts' | 'comments'>('all');
   const [sortOrder, setSortOrder] = useState<'most' | 'least'>('most');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const maxPageButtons = 5;
 
   useEffect(() => {
     fetchUserType();
@@ -91,9 +94,10 @@ export default function RecentPosts() {
       }
 
       const data = await response.json();
+      console.log("data", data);
       const itemsWithType = data.map((item: PostOrComment) => ({
         ...item,
-        type: item.postId ? 'post' : 'comment',
+        type: item.postId ? 'comment' : 'post',
       }));
       setItems(itemsWithType);
     } catch (err) {
@@ -116,6 +120,34 @@ export default function RecentPosts() {
       return a.reports.length - b.reports.length;
     }
   });
+
+  const paginatedItems = sortedItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const totalPages = Math.ceil(sortedItems.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPageButtons = () => {
+    const pageButtons = [];
+    const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    const endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageButtons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-4 py-2 mx-1 rounded-lg ${currentPage === i ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return pageButtons;
+  };
 
   if (loadingUser) {
     return (
@@ -167,6 +199,7 @@ export default function RecentPosts() {
             </button>
           </div>
           <div className="flex space-x-4">
+            <label htmlFor="sortOrder" className="text-gray-300">Sort by:</label>
             <select
               id="sortOrder"
               value={sortOrder}
@@ -184,18 +217,39 @@ export default function RecentPosts() {
         ) : error ? (
           <div className="text-red-500">{error}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedItems.map((item) => (
-              <div key={item.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
-                <h2 className="text-xl font-bold text-white mb-2">{item.type === 'post' ? 'Post' : 'Comment'}</h2>
-                <p className="text-gray-400 mb-4">{item.content}</p>
-                <div className="text-gray-500 mb-2">Reports: {item.reports.length}</div>
-                <Link href={item.type === 'post' ? `/blogs/${item.postId}` : `/comments/${item.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
-                  View {item.type === 'post' ? 'Post' : 'Comment'}
-                </Link>
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedItems.map((item) => (
+                <div key={item.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700 w-full">
+                  <h2 className="text-xl font-bold text-white mb-2">{item.type === 'post' ? 'Post' : 'Comment'}</h2>
+                  <p className="text-gray-400 mb-4">{item.content}</p>
+                  <div className="text-gray-500 mb-2">Reports: {item.reports.length}</div>
+                  <Link href={item.type === 'post' ? `/blogs/${item.id}` : `/comments/${item.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
+                    View {item.type === 'post' ? 'Post' : 'Comment'}
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center mt-6">
+              {currentPage > 1 && (
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="px-4 py-2 mx-1 rounded-lg bg-gray-800 text-gray-300"
+                >
+                  &lt;
+                </button>
+              )}
+              {renderPageButtons()}
+              {currentPage < totalPages && (
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="px-4 py-2 mx-1 rounded-lg bg-gray-800 text-gray-300"
+                >
+                  &gt;
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
