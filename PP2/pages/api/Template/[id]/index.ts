@@ -1,6 +1,6 @@
-import { prisma } from '@/prisma/prisma';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { protectedRoute } from '../../../../middleware/auth';
+import { prisma } from "@/prisma/prisma";
+import { NextApiRequest, NextApiResponse } from "next";
+import { protectedRoute } from "../../../../middleware/auth";
 
 interface UpdateTemplateBody {
   title: string;
@@ -22,11 +22,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "PUT") {
     const updates: UpdateTemplateBody = req.body;
-  
+
     // Validate that at least one field is being updated
     if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({
-        error: "No update fields provided"
+        error: "No update fields provided",
       });
     }
 
@@ -54,24 +54,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const updatedTemplate = await prisma.codeTemplate.update({
         where: { id: templateId },
         data: {
-          title: title.trim(),
-          explanation: explanation.trim(),
-          language: language.toLowerCase().trim(),
-          code,
+          ...(updates.title && { title: updates.title.trim() }),
+          ...(updates.explanation && {
+            explanation: updates.explanation.trim(),
+          }),
+          ...(updates.language && {
+            language: updates.language.toLowerCase().trim(),
+          }),
+          ...(updates.code && { code: updates.code }),
           updatedAt: new Date(),
-          tags: {
-            // Disconnect all existing tags
-            disconnect: await prisma.templateTag.findMany({
-              where: { codeTemplates: { some: { id: templateId } } },
-              select: { id: true },
-            }),
-            // Connect or create new tags
-            connectOrCreate:
-              tags?.map((tag) => ({
+          ...(updates.tags && {
+            tags: {
+              disconnect: await prisma.templateTag.findMany({
+                where: { codeTemplates: { some: { id: templateId } } },
+                select: { id: true },
+              }),
+              connectOrCreate: updates.tags.map((tag) => ({
                 where: { name: tag.toLowerCase().trim() },
                 create: { name: tag.toLowerCase().trim() },
-              })) || [],
-          },
+              })),
+            },
+          }),
         },
         include: {
           tags: true,
@@ -90,9 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       console.error("Template update error:", error);
       return res.status(500).json({ error: "Update failed" });
     }
-  } 
-  
-  else if (req.method === "DELETE") {
+  } else if (req.method === "DELETE") {
     try {
       await prisma.codeTemplate.delete({
         where: { id: templateId },
