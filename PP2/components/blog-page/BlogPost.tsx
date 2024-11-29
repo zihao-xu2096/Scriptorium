@@ -71,7 +71,7 @@ export const BlogPost = function ({id}: PostProps) {
           <RichTextEditor readOnly={false} initialValue={JSON.parse(post.content)} />
           </div>
         </div>
-        <CommentSection />
+        <CommentSection blogId={id} />
       </> : 
       <>
       <h1>Post Not Found</h1>
