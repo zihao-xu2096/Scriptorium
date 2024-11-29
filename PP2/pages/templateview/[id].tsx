@@ -159,7 +159,7 @@ export default function TemplateDetail() {
       }
 
       const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/Template`, {
+      const response = await fetch(`/api/template`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ export default function TemplateDetail() {
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/search')}
           className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
         >
           <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
@@ -264,10 +264,13 @@ export default function TemplateDetail() {
           <div className="mb-2">
             <span>tags : </span>
             {template.tags.map((tag: String) => (
-              <span className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
-              bg-green-900 rounded-full">
-                {tag}
-              </span>
+              <span 
+              key={tag.toString()}
+              className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
+              bg-green-900 rounded-full"
+            >
+              {tag}
+            </span>
             ))}
           </div>
           <div className="mb-6">
