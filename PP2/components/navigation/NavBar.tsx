@@ -34,7 +34,7 @@ export function NavBar() {
           {user ? (
             <>
               {user.userType === "ADMIN" &&
-              <Link href="/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+              <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 Reports
               </Link>}
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
