@@ -139,7 +139,7 @@ async function getTemplates({ id, authorId, language, tag } = {}) {
   if (language) params.append('language', language);
   if (tag) params.append('tag', tag);
   
-  const response = await fetch(`/api/Template?${params}`);
+  const response = await fetch(`/api/template?${params}`);
   
   if (!response.ok) {
     const error = await response.json();
@@ -170,7 +170,7 @@ async function getTemplates({ id, authorId, language, tag } = {}) {
  * })
  */
 async function createTemplate(templateData) {
-  const response = await fetch('/api/Template', {
+  const response = await fetch('/api/template', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(templateData),
@@ -195,7 +195,7 @@ async function createTemplate(templateData) {
  * @returns {Promise<Object>} Updated template data
  */
 async function updateTemplate(id, updateData) {
-  const response = await fetch(`/api/Template/${id}`, {
+  const response = await fetch(`/api/template/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updateData),
@@ -215,7 +215,7 @@ async function updateTemplate(id, updateData) {
  * @returns {Promise<void>}
  */
 async function deleteTemplate(id) {
-  const response = await fetch(`/api/Template/${id}`, {
+  const response = await fetch(`/api/template/${id}`, {
     method: 'DELETE',
   });
   

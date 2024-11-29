@@ -31,7 +31,7 @@ export const LinkModal = forwardRef<HasShowFunction, LinkModalProps>(function ({
   useEffect((() => {
     const fetchCodeTemplates = async () => {
       try {
-        let response = await fetch(`/api/Template?title=${search}`, {
+        let response = await fetch(`/api/template?title=${search}`, {
           method: 'GET'
         });
   

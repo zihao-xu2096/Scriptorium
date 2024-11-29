@@ -114,7 +114,7 @@ export const Dashboard = () => {
               method: "GET",
               headers: {Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
             }), 
-            fetch(`/api/Template?authorId=${user.id}`, {
+            fetch(`/api/template?authorId=${user.id}`, {
               method: 'GET'
             }),
             fetch(`/api/blog-posts?limit=5&sortBy=mostValued`, {
