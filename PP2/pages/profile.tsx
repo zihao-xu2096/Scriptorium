@@ -175,6 +175,7 @@ export default function Profile() {
     setCurrentPage(page);
   };
 
+
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
@@ -299,30 +300,31 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>
-              ))}
+                        ))}
             </div>
 
             <div className="flex justify-center space-x-2 mt-4">
               {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
-                  }`}
-                >
-                  {index + 1}
-                </button>
+              <button
+              key={index}
+              onClick={() => handlePageChange(index + 1)}
+              className={`px-3 py-1 rounded-md ${
+              currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
+              }`}
+              >
+              {index + 1}
+              </button>
               ))}
             </div>
           </div>
 
         </div>
-      </div>
-    </>
+    </div>
+    
+  </>
   );
 }
