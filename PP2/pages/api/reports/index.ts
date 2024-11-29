@@ -1,8 +1,8 @@
-import { prisma } from '@/prisma/prisma';
 import { protectedRoute } from '@/middleware/auth';
 import { ExtendedRequest } from '@/new-types';
-import { NextApiResponse } from 'next';
+import { prisma } from '@/prisma/prisma';
 import { Comment, Post } from '@prisma/client';
+import { NextApiResponse } from 'next';
 
 type BlogPostsQuery = {
   page?: string | number
@@ -29,10 +29,16 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       return;
     }
 
-    const pageInt = typeof(page) === "string" ? parseInt(page) : page
-    const limitInt = typeof(limit) === "string" ? parseInt(limit) : limit
+    const pageInt = typeof(page) === "string" ? parseInt(page) : page;
+    const limitInt = typeof(limit) === "string" ? parseInt(limit) : limit;
 
+    // Fetches reported Posts
     const posts = await prisma.post.findMany({ 
+      where: {
+        reports: {
+          some: {}
+        }
+      },
       include: {
         reports: true,
         _count: {
@@ -41,7 +47,13 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       }
     });
 
+    // Fetches reported Comments
     const comments = await prisma.comment.findMany({ 
+      where: {
+        reports: {
+          some: {}
+        }
+      },
       include: {
         reports: true,
         _count: {
@@ -50,16 +62,16 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
       }
     });
 
-    const combined: (HasReports)[] = [...posts ,...comments];
+
+    const combined: (HasReports & (Post | Comment))[] = [...posts, ...comments];
     combined.sort((a, b) => {
       return b._count.reports - a._count.reports;
-    })
+    });
 
-    res.status(200).json(combined.slice((pageInt - 1) * limitInt, pageInt * limitInt));
+    res.status(200).json(combined);
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }
 }
-
 
 export default protectedRoute(handler, ["GET"]);
