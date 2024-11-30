@@ -1,7 +1,8 @@
 import { Post } from '@prisma/client';
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { RichTextEditor } from "../editor/Editor";
 import { CommentSection } from "./CommentSection";
+import { UserContext } from '@/context/UserContext';
 
 interface PostProps {
   id: number;
@@ -25,11 +26,12 @@ export interface PostWithDisplay extends Post {
 
 export const BlogPost = function ({ id }: PostProps) {
   const [post, setPost] = useState<PostWithDisplay | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useContext(UserContext);
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
-    const fetchCodeTemplates = async () => {
+    const fetchPost = async () => {
       try {
         let response = await fetch(`/api/blog-posts/${id}`, {
           method: 'GET',
@@ -39,8 +41,12 @@ export const BlogPost = function ({ id }: PostProps) {
         });
 
         if (!response.ok) {
+          if (response.status === 404) {
+            //404
+            setPost(null);
+            return
+          }
           console.log(response);
-          setLoading(false);
           return;
         }
 
@@ -49,14 +55,16 @@ export const BlogPost = function ({ id }: PostProps) {
         console.log(results);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchCodeTemplates();
+    fetchPost();
   }, [id]);
 
   return (
-    loading ? <h1>loading</h1> :
+    loading || userLoading ? <h1>loading</h1> :
     <>
       {post ? 
       <>

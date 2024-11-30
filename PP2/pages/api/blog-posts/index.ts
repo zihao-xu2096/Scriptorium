@@ -196,8 +196,6 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         } : undefined
     }
     })
-
-    console.log(posts, count)
     res.status(200).json({ posts, count});
   } else {
     res.status(405).json({ message: "Method not allowed" });

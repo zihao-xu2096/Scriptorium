@@ -61,7 +61,6 @@ export default function Profile() {
         })
 
         if (refreshRes.status !== 200) {
-          console.log('Access token refreshed');
           setAuthorized(false);
           return;
         }
@@ -300,7 +299,7 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>

@@ -1,7 +1,9 @@
 import { Comment } from '@prisma/client';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Comment as CommentElement } from './Comment';
+import { attemptRefresh, UserContext } from '@/context/UserContext';
+import { useRouter } from 'next/router';
 
 interface CommentSectionProps {
   blogId: number;
@@ -25,12 +27,14 @@ interface CommentState extends CommentWithReplies {
 
 export const CommentSection = ({ blogId }: CommentSectionProps) => {
   const [comments, setComments] = useState<CommentWithReplies[]>([]);
-  const [mainComment, setMainComment] = useState<CommentWithReplies | null>(null);
+  const [mainComment, setMainComment] = useState<CommentState | null>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [pageNum, setPageNum] = useState<number>(1); // Default to 1
   const [pageCount, setPageCount] = useState<number | null>(null);
+  const { user, login, logout } = useContext(UserContext)
   const [history, setHistory] = useState<CommentState[]>([]); // Track ancestors
+  const router = useRouter()
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -51,7 +55,7 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
 
         const results: CountedComments = await response.json();
         setComments(results.comments);
-        setPageCount(results.count / 5);
+        setPageCount(Math.ceil(results.count / 5));
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -62,13 +66,10 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
     fetchComments();
   }, [mainComment, pageNum, blogId]); // Dependencies include `blogId` to re-fetch when it changes
 
-  const formatRelativeTime = (dateString: string) => {
-    return formatDistanceToNowStrict(new Date(dateString), { addSuffix: true });
-  };
-
   const handleBackClick = () => {
     // Go back to the previous comment level (pop the last comment from history)
     if (history.length == 0) {
+      setPageNum(mainComment?.pageNumber || 1);
       setMainComment(null);
       return;
     }
@@ -77,15 +78,108 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
 
     setHistory(previousHistory);
     setMainComment(lastComment || null);
-    setPageNum(lastComment?.pageNumber || 1); // Reset to page 1 when going back
+    setPageNum(mainComment?.pageNumber || 1); // Reset to page 1 when going back
+  };
+
+  const handleDelete = async (postId: number, commentId: number) => {
+    let accessToken = localStorage.getItem('accessToken');
+    let response = await fetch(`/api/blog-posts/${postId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          accessToken = localStorage.getItem('accessToken');
+          login(refreshed);
+          response = await fetch(`/api/blog-posts/${postId}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (!response.ok) {
+            //set the error
+            return;
+          }
+        } else {
+          logout();
+          router.push("/unauthorized");
+          return;
+        }
+      } else {
+        //set error
+      }
+    }
+    
+    const upDated = await response.json()
+    console.log(upDated)
+  }
+
+  const fetchComments = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    try {
+      const response = await fetch(`/api/blog-posts/${blogId}/comments?limit=5&page=${pageNum}${mainComment ? `&parentId=${mainComment.id}` : ''}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.log(response);
+        setLoading(false);
+        return;
+      }
+
+      const results: CountedComments = await response.json();
+      setComments(results.comments);
+      setPageCount(Math.ceil(results.count / 5));
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
   };
 
   const handleCommentSubmit = async () => {
+    const fetchComments = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      try {
+        const response = await fetch(`/api/blog-posts/${blogId}/comments?limit=5&page=${pageNum}${mainComment ? `&parentId=${mainComment.id}` : ''}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.log(response);
+          setLoading(false);
+          return;
+        }
+
+        const results: CountedComments = await response.json();
+        setComments(results.comments);
+        setPageCount(Math.ceil(results.count / 5));
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+      }
+    };
     // Handle submitting a new comment
     if (!newComment.trim()) return;
 
-    const accessToken = localStorage.getItem('accessToken');
-    const response = await fetch(`/api/blog-posts/${blogId}/comments`, {
+    let accessToken = localStorage.getItem('accessToken');
+    let response = await fetch(`/api/blog-posts/${blogId}/comments`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -97,24 +191,58 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
       }),
     });
 
-    if (response.ok) {
-      setNewComment('');
-    } else {
-      console.error('Failed to submit comment');
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          accessToken = localStorage.getItem('accessToken');
+          login(refreshed);
+          response = await fetch(`/api/blog-posts/${blogId}/comments`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: newComment,
+              parent: mainComment?.id,
+            }),
+          });
+
+          if (!response.ok) {
+            //set the error
+            return;
+          }
+        } else {
+          logout();
+          router.push("/unauthorized");
+          return;
+        }
+      } else {
+        //set error
+      }
     }
+
+    fetchComments();
+    setPageNum(1);
+    setNewComment('');
   };
 
   const renderComments = () => {
     return (
       <div className="space-y-4">
-        {comments.map((reply) => 
-          <CommentElement comment={reply} commentType='BOTTOM' onClick={() => {
+        {comments.map((reply, index) => 
+          <CommentElement key={index} comment={reply} commentType='BOTTOM' onClick={() => {
+            setComments([])
             if (mainComment) {
               setHistory([...history, { ...mainComment, pageNumber: pageNum }]);
             }
-            setMainComment(reply);
+            setMainComment({...reply, pageNumber: pageNum});
             setPageNum(1); // Always reset to page 1 when diving into replies
-          }} />
+          }} onDelete={async () => {
+            await handleDelete(reply.postId, reply.id)
+            fetchComments()
+          }}/>
         )}
       </div>
     );
@@ -140,17 +268,33 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
           {history.length > 0 && (
             <div className="space-y-4 mb-6">
               {history.map((ancestor, index) => (
-                <CommentElement comment={ancestor} commentType='ANCESTOR' />
+                <CommentElement key={index} comment={ancestor} commentType='ANCESTOR' />
               ))}
             </div>
           )}
 
           {mainComment && (
-            <CommentElement comment={mainComment} commentType='MAIN' />
+            <CommentElement comment={mainComment} commentType='MAIN' onDelete={
+              async () => {
+                await handleDelete(mainComment.postId, mainComment.id)
+                if (history.length == 0) {
+                  setPageNum(1); 
+                  setMainComment(null);
+                  return;
+                }
+                const previousHistory = [...history];
+                const lastComment = previousHistory.pop();
+
+                setHistory(previousHistory);
+                setMainComment(lastComment || null);
+                setPageNum(1); // Reset to page 1 when going back
+              }
+            } />
           )}
 
           {renderComments()}
 
+          {user &&
           <div className="bg-gray-500 p-4 rounded-md shadow-sm">
             <h4 className="font-semibold text-lg mb-4">{mainComment ? 'Reply to Comment' : 'Write a comment'}</h4>
             <textarea
@@ -165,9 +309,9 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
             >
               Submit
             </button>
-          </div>
+          </div>}
 
-          {pageCount && pageCount > 1 && (
+          {pageCount && pageCount > 1 ? (
             <div className="flex justify-between mt-6">
               <button
                 onClick={() => setPageNum((prev) => Math.max(1, prev - 1))}
@@ -184,7 +328,7 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
                 Next
               </button>
             </div>
-          )}
+          ) : <></>}
         </>
       )}
     </div>

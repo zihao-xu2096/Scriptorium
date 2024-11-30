@@ -1,15 +1,81 @@
-import React, { MouseEventHandler, useEffect, useState } from 'react';
-import { ThumbUp, ThumbDown, Reply } from '@mui/icons-material';
+import React, { MouseEventHandler, useContext, useEffect, useState } from 'react';
+import { ThumbUp, ThumbDown } from '@mui/icons-material';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { CommentWithReplies } from './CommentSection';
+import { attemptRefresh, UserContext } from '@/context/UserContext';
+import { useRouter } from 'next/router';
 
 interface CommentProps {
   comment: CommentWithReplies, 
   commentType: "MAIN" | "ANCESTOR" | "BOTTOM", 
   onClick?: MouseEventHandler<HTMLDivElement>
+  onDelete?: Function
 }
 
-export function Comment ({comment, commentType, onClick}: CommentProps) {
+export function Comment ({comment, commentType, onClick, onDelete}: CommentProps) {
+  const [upvotes, setUpvotes] = useState(0)
+  const [downvotes, setDownvotes] = useState(0)
+  const [isRerendering, setIsRerendering] = useState(false);
+
+  const { user, login, logout } = useContext(UserContext);
+  const router = useRouter()
+
+  useEffect(() => {
+    setUpvotes(comment.upvotes)
+    setDownvotes(comment.downvotes)
+  }, [comment])
+
+  const handleVote = async (ratingType: "upvote" | "downvote") => {
+    let accessToken = localStorage.getItem('accessToken');
+    let response = await fetch(`/api/blog-posts/${comment.postId}/comments/${comment.id}/rate`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ratingType
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          accessToken = localStorage.getItem('accessToken');
+          login(refreshed);
+          response = await fetch(`/api/blog-posts/${comment.postId}/comments/${comment.id}/rate`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ratingType
+            }),
+          });
+
+          if (!response.ok) {
+            //set the error
+            return;
+          }
+        } else {
+          logout();
+          router.push("/unauthorized");
+          return;
+        }
+      } else {
+        //set error
+      }
+    }
+    
+    const upDated = await response.json()
+    console.log(upDated)
+    comment.upvotes = upDated.upvotes
+    comment.downvotes = upDated.downvotes
+    setUpvotes(upDated.upvotes)
+    setDownvotes(upDated.downvotes)
+  }
 
   // Calculate the date relative to now
   const relativeTime = formatDistanceToNowStrict(comment.createdAt, { addSuffix: true });
@@ -34,20 +100,29 @@ export function Comment ({comment, commentType, onClick}: CommentProps) {
         </div>
 
         {/* Upvotes/Downvotes */}
+        {user &&
         <div className="flex items-center space-x-2 text-gray-500">
-          <div className="flex items-center" onClick={(e) => {
+          {comment.userId === user?.id && <button onClick={(e) => {
+            e.stopPropagation()
+            if (onDelete) {
+              onDelete()
+            }
+          }}>delete</button>}
+          <button className="flex items-center" onClick={(e) => {
             e.stopPropagation();
+            handleVote("upvote")
           }}>
-            <ThumbUp className="text-blue-500" />
-            <span className="ml-1">{comment.upvotes}</span>
-          </div>
-          <div className="flex items-center" onClick={(e) => {
+            <ThumbUp className="text" />
+            <span className="ml-1">{upvotes}</span>
+          </button>
+          <button className="flex items-center" onClick={(e) => {
             e.stopPropagation();
+            handleVote("downvote")
           }}>
-            <ThumbDown className="text-red-500" />
-            <span className="ml-1">{comment.downvotes}</span>
-          </div>
-        </div>
+            <ThumbDown className="text" />
+            <span className="ml-1">{downvotes}</span>
+          </button>
+        </div>}
       </div>
 
     </div>

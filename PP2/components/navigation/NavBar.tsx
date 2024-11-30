@@ -1,31 +1,100 @@
 import { UserContext } from "@/context/UserContext";
 import Link from "next/link";
-import { useContext, useState } from "react";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
 
 
 export function NavBar() {
-  const { user, loading, logout } = useContext(UserContext);
+  const router = useRouter();
+  const { user, loading, login, logout } = useContext(UserContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  console.log(user);
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
 
-  return loading ? 
-  <header className="bg-blue-600 p-4">
-     <div className="flex justify-center items-center">
-       <span className="text-white">Loading...</span> {/* Loading message */}
-     </div>
-   </header> :
-  <header className="bg-blue-600 p-4">
+    if (!accessToken || !refreshToken) {
+      logout();
+      return;
+    }
+
+    const fetchUserData = async (token: string) => {
+      try {
+        let response = await fetch('/api/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          if (refreshToken) {
+            const newToken = await fetchRefreshToken(refreshToken);
+            if (!newToken) {
+              localStorage.removeItem("refreshToken")
+              logout();
+              return;
+            } else {
+              localStorage.setItem('accessToken', newToken);
+              response = await fetch('/api/profile', {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${newToken}`,
+                },
+              });
+              if (!response.ok) {
+                logout();
+                return;
+              }
+            }
+          } else {
+            logout();
+            return;
+          }
+        }
+  
+        const userData = await response.json();
+        login(userData);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const fetchRefreshToken = async (token: string) => {
+      try {
+        const response = await fetch('/api/refresh', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          return null;
+        }
+
+        const accessToken = await response.json();
+        return accessToken.accessToken;
+      } catch (error) {
+        console.error(error);
+      } 
+    };
+    
+    fetchUserData(accessToken);
+     
+  }, [])
+
+  return <header className="bg-blue-600 p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
         </Link>
 
-        <div className="h-8 border-2 border-gray-500 grow mx-4"></div>
+        <div className="h-8  grow mx-4"></div>
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
@@ -41,7 +110,11 @@ export function NavBar() {
                 {`${user.firstName} ${user.lastName}`}
               </Link>
               <button
-                onClick={logout}
+                onClick={() => {
+                    router.push("/");
+                    logout();
+                  }
+                }
                 className="text-white hover:text-gray-300 transition duration-200 ease-in-out"
               >
                 Log Out

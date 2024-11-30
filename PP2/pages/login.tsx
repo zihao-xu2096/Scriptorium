@@ -25,7 +25,7 @@ export default function Login() {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       login(data);
-      router.push('/profile');
+      router.push('/');
     } else {
       const errorData = await res.json();
       alert(`Login failed: ${errorData.message}`);

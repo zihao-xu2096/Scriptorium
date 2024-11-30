@@ -65,12 +65,14 @@ export const Dashboard = () => {
             responses.map(response => response.json())
           );
 
-          setBlogPosts(blogPostsData);
+          setBlogPosts(blogPostsData.posts);
           setTemplates(templatesData.slice(0,3));
-          setMostValuedPosts(mostValued)
+          setMostValuedPosts(mostValued.posts);
         } catch (error) {
           console.error('Error fetching data:', error);
         }
+      } else {
+        router.push("/");
       }
     };
     
@@ -122,7 +124,7 @@ export const Dashboard = () => {
         {templates.length > 0 ? (
           <div className="flex flex-col space-y-4">
             {templates.map((template, index) => (
-              <Link key={index} href={`/template/${template.id}`}>
+              <Link key={index} href={`/templateview/${template.id}`}>
                 <div className="p-4 bg-gray-700 rounded-lg text-white shadow-md border border-gray-600 cursor-pointer hover:bg-gray-600 transition duration-200">
                   <h3 className="font-bold text-lg">{template.title}</h3>
                   <div className="mt-2 flex space-x-2">
@@ -156,7 +158,7 @@ export const Dashboard = () => {
                     className="flex items-center space-x-3 p-2 bg-gray-700 rounded-md hover:bg-gray-600 transition duration-200"
                   >
                     <div className="flex-1">
-                      <Link href={`/blog/${post.id}`} className="font-semibold text-sm text-indigo-500 hover:text-indigo-400 truncate">
+                      <Link href={`/blogs/${post.id}`} className="font-semibold text-sm text-indigo-500 hover:text-indigo-400 truncate">
                           {post.title}
                       </Link>
                       <p className="text-xs text-gray-400 mt-1 truncate">{`${post.createdBy.firstName} ${post.createdBy.lastName}`}</p>
@@ -186,7 +188,7 @@ export const Dashboard = () => {
               </Link>
             </li>
             <li>
-              <Link href="/blog/write">
+              <Link href="/blogs/write">
                 <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition duration-300">
                   <span className="material-icons text-yellow-600">create</span>
                   <span className="text-yellow-600 font-normal text-lg md:text-base">Write Blog Post</span>
