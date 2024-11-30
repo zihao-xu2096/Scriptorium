@@ -176,9 +176,8 @@ export default function TemplateDetail() {
       } else {
         const { success } = await refreshAccessToken();
         if (!success) {
-          alert('Unauthorized');
+          alert('Log in to save templates');
           const errorData = await response.json();
-          alert(`Failed to create template: ${errorData.error || response.statusText}`);
           setTimeout(() => {
             router.push('/login');
           }, 100);
