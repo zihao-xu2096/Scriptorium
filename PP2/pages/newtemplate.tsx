@@ -9,11 +9,12 @@ interface Template {
   explanation: string;
   language: string;
   code: string;
-  author: {
-    name: string;
-  };
+  tags: string[];
+  author: string;
   authorId: string;
+  parentId: string;
 }
+
 
 export default function TemplateDetail() {
   const router = useRouter();
@@ -25,12 +26,14 @@ export default function TemplateDetail() {
   const [explanation, setExplanation] = useState('');
   const [language, setLanguage] = useState('');
   const [code, setCode] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCurrentUserID();
   }, [])
-  
+
   const fetchCurrentUserID = async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
@@ -48,21 +51,61 @@ export default function TemplateDetail() {
     }
   }
 
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   const handleSubmit = async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
-        throw new Error('Not authenticated');
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Log in to save templates');
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
       }
 
       const authorId = currentUserID
-  
+
+      // Validate fields before sending and alert user if not all fields are filled (except tags)
+      if (!title.trim()) {
+        alert('Title is required');
+        return;
+      }
+      if (!explanation.trim()) {
+        alert('Description is required');
+        return;
+      }
+      if (!language.trim()) {
+        alert('Programming language is required');
+        return;
+      }
+      if (!code.trim()) {
+        alert('Code is required');
+        return;
+      }
+      if (!authorId) {
+        alert('You must be logged in to create a template');
+        return;
+      }
+
       const data = {
         title: title,
         explanation: explanation,
         language: language.toLowerCase(),
         code: code,
         authorId: authorId,
+        tags: tags
       }
 
       console.log(data)
@@ -157,6 +200,43 @@ export default function TemplateDetail() {
               placeholder="Programming Language"
               className="px-3 py-1 text-sm font-medium bg-gray-700 text-indigo-400 rounded-full"
             />
+          </div>
+
+          {/* Set Tags */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Tags</h2>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 bg-indigo-600 text-white rounded-full flex items-center gap-2"
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="hover:text-red-300"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                placeholder="Add tags"
+                className="flex-1 bg-gray-700 text-gray-300 p-2 rounded"
+              />
+              <button
+                onClick={handleAddTag}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Add Tag
+              </button>
+            </div>
           </div>
 
           <div className="mb-6">
