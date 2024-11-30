@@ -194,7 +194,12 @@ export default function Profile() {
     );
   }
 
+  if (!user) {
+    return <div>Loading... </div>;
+  }
+
   return (
+    !user ? <div>Loading... </div> :
     <>
       <NavBar />
       <div className="flex flex-col items-center bg-gray-900 min-h-screen">

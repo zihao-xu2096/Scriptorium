@@ -28,7 +28,16 @@ export default function TemplateDetail() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [title, setTitle] = useState('');
+  const [language, setLanguage] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [explanation, setExplanation] = useState('');
+
+
   const [isEditing, setIsEditing] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+
   const [editedCode, setEditedCode] = useState('');
   const [stdin, setStdin] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
@@ -38,6 +47,24 @@ export default function TemplateDetail() {
   const [runError, setRunError] = useState<string | null>(null);
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (template) {
+      setTitle(template.title);
+      setLanguage(template.language);
+      setTags(template.tags);
+      setExplanation(template.explanation);
+    }
+  }, [template]);
+
+  useEffect(() => {
+    if (template) {
+      setTitle(template.title);
+      setLanguage(template.language);
+      setTags(template.tags);
+      setExplanation(template.explanation);
+    }
+  }, [template]);
+
   const { user, login } = useContext(UserContext);
 
   useEffect(() => {
@@ -45,6 +72,7 @@ export default function TemplateDetail() {
       fetchTemplate();
     }
   }, [id]);
+
   useEffect(() => {
     if (template) {
       setEditedCode(template.code);
@@ -52,6 +80,32 @@ export default function TemplateDetail() {
       setEditedDescription(template.explanation);
     }
   }, [template]);
+
+  const fetchCurrentUserID = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch('/api/user/fetchAuthorID', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserID(data.authorID);
+      } else {
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Log in to save templates');
+          const errorData = await response.json();
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user ID:', error);
+    }
+  }
 
   const fetchTemplate = async () => {
     try {
@@ -85,6 +139,17 @@ export default function TemplateDetail() {
 
   };
 
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   const handleSave = async () => {
     try {
       if (!template) {
@@ -102,20 +167,19 @@ export default function TemplateDetail() {
           'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          title: template.title,
-          explanation: template.explanation,
-          language: template.language,
+          title: title,
+          explanation: explanation,
+          language: language,
           code: editedCode,
-          // tags: template.tags
+          tags: tags
         }),
       });
 
       if (!response.ok) {
         const { success } = await refreshAccessToken();
         if (!success) {
-          alert('Unauthorized');
+          alert('Log in to save templates');
           const errorData = await response.json();
-          alert(`Failed to create template: ${errorData.error || response.statusText}`);
           setTimeout(() => {
             router.push('/login');
           }, 100);
@@ -137,12 +201,12 @@ export default function TemplateDetail() {
         throw new Error('Template not found');
       }
       const data = {
-        title: template.title,
-        explanation: template.explanation,
-        language: template.language,
-        code: template.code,
+        title: title,
+        explanation: explanation,
+        language: language,
+        code: editedCode,
         authorId: currentUserID,
-        tags: template.tags,
+        tags: tags,
         parentId: template.id
       }
 
@@ -164,9 +228,8 @@ export default function TemplateDetail() {
       } else {
         const { success } = await refreshAccessToken();
         if (!success) {
-          alert('Unauthorized');
+          alert('Log in to save templates');
           const errorData = await response.json();
-          alert(`Failed to create template: ${errorData.error || response.statusText}`);
           setTimeout(() => {
             router.push('/login');
           }, 100);

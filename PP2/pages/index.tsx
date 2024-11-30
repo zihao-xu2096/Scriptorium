@@ -1,4 +1,3 @@
-
 import Dashboard from "@/components/home/Dashboard";
 import localFont from "next/font/local";
 import { useContext, useEffect } from "react";

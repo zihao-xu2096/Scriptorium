@@ -1,5 +1,5 @@
-import React, { createContext, useState, ReactNode, useEffect } from "react";
 import { UserPayload } from "@/new-types";
+import { createContext, ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 interface UserContextType {

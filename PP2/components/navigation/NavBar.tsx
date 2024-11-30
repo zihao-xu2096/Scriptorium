@@ -97,18 +97,28 @@ export function NavBar() {
         <div className="h-8  grow mx-4"></div>
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
+          <Link href="/blogs" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+            Blogs (IMPLEMENT LINK)
+          </Link>
+          <span className="text-white opacity-50">|</span>
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
             Explore
           </Link>
           {user ? (
             <>
-              {user.userType === "ADMIN" &&
-              <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-                Reports
-              </Link>}
+              {user.userType === "ADMIN" && (
+                <>
+                  <span className="text-white opacity-50">|</span>
+                  <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                    Reports
+                  </Link>
+                </>
+              )}
+              <span className="text-white opacity-50">|</span>
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 {`${user.firstName} ${user.lastName}`}
               </Link>
+              <span className="text-white opacity-50">|</span>
               <button
                 onClick={() => {
                     router.push("/");
