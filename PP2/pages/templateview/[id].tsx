@@ -210,7 +210,8 @@ export default function TemplateDetail() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to compile code');
+        console.log(data)
+        throw new Error(data.error || 'Failed to compile code');
       }
 
       setOutput(data.output || 'No output');

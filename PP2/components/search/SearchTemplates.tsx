@@ -24,10 +24,14 @@ interface Tag {
 const ITEMS_PER_PAGE = 21; // 3x7 grid
 const USER_TEMPLATES_LIMIT = 6;
 
+interface SearchTemplateProps {
+  page: number
+}
+
+
 export default function SearchTemplates() {
-  const router = useRouter();
-  const { page } = router.query;
-  const currentPage = parseInt(page as string) || 1;
+  const router = useRouter()
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [allTemplates, setAllTemplates] = useState<Template[]>([]); // Store all templates
   const [displayedTemplates, setDisplayedTemplates] = useState<Template[]>([]); // Store current page templates
@@ -136,14 +140,7 @@ export default function SearchTemplates() {
   const totalPages = Math.ceil(allTemplates.length / ITEMS_PER_PAGE);
 
   const handlePageChange = (newPage: number) => {
-    router.push({
-      pathname: '/search/[page]',
-      query: {
-        page: newPage,
-        ...(searchQuery && { q: searchQuery }),
-        ...(searchType && { type: searchType })
-      }
-    });
+    setCurrentPage(newPage)
   };
 
   // Seed data button
@@ -224,7 +221,11 @@ export default function SearchTemplates() {
         <form onSubmit={handleSearch} className="flex gap-4 mb-8">
           <select
             value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
+            onChange={(e) => { 
+              setSearchType(e.target.value) 
+              setCurrentPage(1)
+              setSearchQuery('')
+            }}
             className="p-3 bg-gray-800 border-gray-700 text-white rounded-lg"  // Added text-white
           >
             <option value="language" className="text-white">Language</option>
@@ -235,7 +236,10 @@ export default function SearchTemplates() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setCurrentPage(1);
+              setSearchQuery(e.target.value);
+            }}
             placeholder={`Search by ${searchType}...`}
             className="flex-1 p-3 bg-gray-800 border-gray-700 text-white  // Added text-white
             placeholder-gray-400 rounded-lg shadow-sm 
@@ -404,14 +408,14 @@ export default function SearchTemplates() {
                     </p>
                     <div className="mb-2 flex flex-wrap gap-1">
                       <span className="text-gray-300">tags : </span>
-                      {template.tags.map((tag: String, index: number) => (
+                      {template.tags.length > 0 ? template.tags.map((tag: String, index: number) => (
                         <span
                           key={`${template.id}-${tag}-${index}`}
                           className="px-3 py-0.5 my-0.5 text-sm font-medium text-green-400 bg-green-900 rounded-full"
                         >
                           {tag}
                         </span>
-                      ))}
+                      )) : "[no tags]"}
                     </div>
                     <div className="flex items-center justify-between">
                       {/* Updated stats color */}

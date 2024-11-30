@@ -181,7 +181,7 @@ export const Dashboard = () => {
           <ul className="space-y-4">
             <li>
               <Link href="/newtemplate">
-                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition duration-300">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-indigo-100/80 rounded-lg hover:bg-indigo-200 transition duration-300">
                   <span className="material-icons text-indigo-600">add_circle</span>
                   <span className="text-indigo-600 font-normal text-lg md:text-base">Create New Template</span>
                 </div>
@@ -189,7 +189,7 @@ export const Dashboard = () => {
             </li>
             <li>
               <Link href="/blogs/write">
-                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition duration-300">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100/80 rounded-lg hover:bg-yellow-200 transition duration-300">
                   <span className="material-icons text-yellow-600">create</span>
                   <span className="text-yellow-600 font-normal text-lg md:text-base">Write Blog Post</span>
                 </div>
@@ -197,7 +197,7 @@ export const Dashboard = () => {
             </li>
             <li>
               <Link href="/profile">
-                <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100 rounded-lg hover:bg-green-200 transition duration-300">
+                <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100/80 rounded-lg hover:bg-green-200 transition duration-300">
                   <span className="material-icons text-green-600">settings</span>
                   <span className="text-green-600 font-normal text-lg md:text-base">Account Settings</span>
                 </div>

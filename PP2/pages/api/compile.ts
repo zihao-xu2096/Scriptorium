@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } catch (compileError) {
           return res.status(400).json({
             message: 'Compilation failed',
-            error: (compileError instanceof Error ? compileError.toString() : 'Unknown error')
+            error: (compileError instanceof Error ? compileError.toString() : typeof(compileError) === "string" ? compileError : "unknown error")
           });
         }
       }
@@ -124,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Error executing code:', error);
       return res.status(400).json({
         message: 'Code could not compile check for errors.',
-        error: error instanceof Error ? error.toString() : 'Unknown error'
+        error: error instanceof Error ? error.toString() : typeof(error) === "string" ? error : 'Unknown error' 
       });
     }
   } else {

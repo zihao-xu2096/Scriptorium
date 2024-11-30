@@ -98,7 +98,7 @@ export function NavBar() {
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            Search
+            Explore
           </Link>
           {user ? (
             <>

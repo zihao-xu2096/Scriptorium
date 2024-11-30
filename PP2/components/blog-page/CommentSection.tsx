@@ -30,6 +30,7 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
   const [mainComment, setMainComment] = useState<CommentState | null>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
+  const [sortBy, setSortBy] = useState('default');
   const [pageNum, setPageNum] = useState<number>(1); // Default to 1
   const [pageCount, setPageCount] = useState<number | null>(null);
   const { user, login, logout } = useContext(UserContext)

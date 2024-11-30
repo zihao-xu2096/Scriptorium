@@ -15,7 +15,6 @@ interface CommentProps {
 export function Comment ({comment, commentType, onClick, onDelete}: CommentProps) {
   const [upvotes, setUpvotes] = useState(0)
   const [downvotes, setDownvotes] = useState(0)
-  const [isRerendering, setIsRerendering] = useState(false);
 
   const { user, login, logout } = useContext(UserContext);
   const router = useRouter()
