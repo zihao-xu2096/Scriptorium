@@ -52,10 +52,6 @@ export default function TemplateDetail() {
   }, [template]);
 
   useEffect(() => {
-    fetchCurrentUserID();
-  }, [])
-
-  useEffect(() => {
     if (id) {
       fetchTemplate();
     }
@@ -137,6 +133,9 @@ export default function TemplateDetail() {
   };
 
   const handleSave = async () => {
+    
+    fetchCurrentUserID();
+
     try {
       if (!template) {
         throw new Error('Template not found');
@@ -401,7 +400,7 @@ export default function TemplateDetail() {
                 onClick={handleSave}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               >
-                {Number(template.authorId) === Number(currentUserID) ? 'Save' : 'Save and Fork'}
+                {currentUserID &&(Number(template.authorId) === Number(currentUserID)) ? 'Save' : 'Save and Fork'}
               </button>
             ) : (
               <button
