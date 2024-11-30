@@ -22,7 +22,7 @@ export default function Login() {
       // Store tokens in local storage or cookies
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      router.push('/profile');
+      router.push('/');
     } else {
       const errorData = await res.json();
       alert(`Login failed: ${errorData.message}`);
