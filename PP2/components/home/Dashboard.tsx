@@ -190,7 +190,7 @@ export const Dashboard = () => {
         {templates.length > 0 ? (
           <div className="flex flex-col space-y-4">
             {templates.map((template, index) => (
-              <Link key={index} href={`/template/${template.id}`}>
+              <Link key={index} href={`/templateview/${template.id}`}>
                 <div className="p-4 bg-gray-700 rounded-lg text-white shadow-md border border-gray-600 cursor-pointer hover:bg-gray-600 transition duration-200">
                   <h3 className="font-bold text-lg">{template.title}</h3>
                   <div className="mt-2 flex space-x-2">
