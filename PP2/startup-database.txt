@@ -192,7 +192,7 @@ async function populateDatabase() {
             Array.from({ length: numPosts }, (_, i) => {
             const postData = {
                 title: `Post ${i + 1} by ${user.firstName}`,
-                content: '[{"type":"paragraph","align":"center","children":[{"text":"This is the content of post ${i + 1}"}]}]',
+                content: `[{"type":"paragraph","align":"center","children":[{"text":"This is the content of post ${i + 1}"}]}]`.replace('${i + 1}', i + 1),
                 description: `Description for post ${i + 1}`,
                 createdBy: { connect: { id: user.id } },
                 tags: {
