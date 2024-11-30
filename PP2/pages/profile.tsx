@@ -192,7 +192,7 @@ export default function Profile() {
   }
 
   if (!user) {
-    return <div>Loading... Please refresh the page if this persists for longer than 10 seconds as the profile could not be loaded properly.</div>;
+    return <div>Loading... </div>;
   }
 
   return (
