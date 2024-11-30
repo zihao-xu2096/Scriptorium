@@ -26,12 +26,30 @@ export default function TemplateDetail() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [title, setTitle] = useState('');
+  const [language, setLanguage] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [explanation, setExplanation] = useState('');
+
+
   const [isEditing, setIsEditing] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+
   const [editedCode, setEditedCode] = useState('');
   const [output, setOutput] = useState<string>('');
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (template) {
+      setTitle(template.title);
+      setLanguage(template.language);
+      setTags(template.tags);
+      setExplanation(template.explanation);
+    }
+  }, [template]);
 
   useEffect(() => {
     fetchCurrentUserID();
@@ -42,6 +60,7 @@ export default function TemplateDetail() {
       fetchTemplate();
     }
   }, [id]);
+
   useEffect(() => {
     if (template) {
       setEditedCode(template.code);
@@ -59,6 +78,15 @@ export default function TemplateDetail() {
       if (response.ok) {
         const data = await response.json();
         setCurrentUserID(data.authorID);
+      } else {
+        const { success } = await refreshAccessToken();
+        if (!success) {
+          alert('Log in to save templates');
+          const errorData = await response.json();
+          setTimeout(() => {
+            router.push('/login');
+          }, 100);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch current user ID:', error);
@@ -97,6 +125,17 @@ export default function TemplateDetail() {
 
   };
 
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   const handleSave = async () => {
     try {
       if (!template) {
@@ -114,11 +153,11 @@ export default function TemplateDetail() {
           'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          title: template.title,
-          explanation: template.explanation,
-          language: template.language,
+          title: title,
+          explanation: explanation,
+          language: language,
           code: editedCode,
-          // tags: template.tags
+          tags: tags
         }),
       });
 
@@ -148,12 +187,12 @@ export default function TemplateDetail() {
         throw new Error('Template not found');
       }
       const data = {
-        title: template.title,
-        explanation: template.explanation,
-        language: template.language,
+        title: title,
+        explanation: explanation,
+        language: language,
         code: editedCode,
         authorId: currentUserID,
-        tags: template.tags,
+        tags: tags,
         parentId: template.id
       }
 
@@ -258,30 +297,103 @@ export default function TemplateDetail() {
           <span className="font-medium flex items-center">Back to Search</span>
         </button>
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-          <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
-          <div className="mb-2">
-            <span className="text-gray-300">tags : </span>
-            {template.tags.map((tag: String) => (
-              <span
-                key={tag.toString()}
-                className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
-              bg-green-900 rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="mb-6">
-            <span className="text-gray-300">language : </span>
-            <span className="px-3 py-1 text-sm font-medium text-indigo-400 
-                          bg-indigo-900 rounded-full">
-              {template.language}
-            </span>
-          </div>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
-            <p className="text-gray-400">{template.explanation}</p>
-          </div>
+          {isEditing ? (
+            <>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Template Title"
+                className="w-full bg-gray-700 text-white text-3xl font-bold mb-4 p-2 rounded"
+              />
+
+              <div className="mb-6">
+                <input
+                  type="text"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  placeholder="Programming Language"
+                  className="px-3 py-1 text-sm font-medium bg-gray-700 text-indigo-400 rounded-full"
+                />
+              </div>
+
+              {/* Set Tags */}
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Tags</h2>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-indigo-600 text-white rounded-full flex items-center gap-2"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => handleRemoveTag(tag)}
+                        className="hover:text-red-300"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                    placeholder="Add tags"
+                    className="flex-1 bg-gray-700 text-gray-300 p-2 rounded"
+                  />
+                  <button
+                    onClick={handleAddTag}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                  >
+                    Add Tag
+                  </button>
+                </div>
+              </div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
+                <textarea
+                  value={explanation}
+                  onChange={(e) => setExplanation(e.target.value)}
+                  placeholder="Enter template description"
+                  className="w-full bg-gray-700 text-gray-300 p-2 rounded"
+                  rows={4}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-4">
+                {template.title}
+              </h1>
+              <div className="mb-2">
+                <span className="text-gray-300">language : </span>
+                <span className="px-3 py-1 text-sm font-medium text-indigo-400 bg-indigo-900 rounded-full">
+                  {template.language}
+                </span>
+              </div>
+              <div className="mb-6">
+                <div>
+                  <span className="text-gray-300">tags : </span>
+                  {template.tags.map((tag: String) => (
+                    <span key={tag.toString()} className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
+                <p className="text-gray-400">
+                  {template.explanation}
+                </p>
+              </div>
+            </>
+          )}
+
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
             {isEditing ? (
