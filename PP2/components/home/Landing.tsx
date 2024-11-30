@@ -8,7 +8,7 @@ export const LandingPage = () => {
         <div className="absolute top-0 left-0 right-0 bottom-0 bg-opacity-40 bg-black z-0"></div>
         <div className="container mx-auto px-6 text-center md:text-right relative z-10">
           <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif leading-tight mb-4 text-white md:text-right">
-            Scriptorium: The New Way of Writing Code
+            Scriptorium:  the new way of writing code
           </h1>
           <p className="text-base md:text-xl mb-8 w-full md:max-w-2xl mx-auto md:mr-0 text-center md:text-left">
             Scriptorium brings the tools of innovation right to your fingertips. Collaborate with a community of coders and watch your ideas evolve into solutions.
@@ -99,13 +99,6 @@ export const LandingPage = () => {
           </Link>
         </div>
       </section>
-
-      {/* Footer Section */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="container mx-auto text-center">
-          <p className="text-lg">&copy; 2024 Scriptorium. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 };

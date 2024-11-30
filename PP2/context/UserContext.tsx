@@ -1,5 +1,5 @@
-import React, { createContext, useState, ReactNode, useEffect } from "react";
 import { UserPayload } from "@/new-types";
+import { createContext, ReactNode, useEffect, useState } from "react";
 
 interface UserContextType {
   user: UserPayload | null;
@@ -60,6 +60,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                   'Authorization': `Bearer ${newToken}`,
                 },
               });
+              if (!response.ok) {
+                logout();
+              }
             }
           } else {
             setUser(null);

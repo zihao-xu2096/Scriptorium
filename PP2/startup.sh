@@ -130,58 +130,14 @@ fi
 # Create admin user
 log_info "Creating admin user..."
 
-NODE_SCRIPT=$(cat <<'EOF'
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
-
-async function createAdminUser() {
-    try {
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin@scriptorium.com';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
-        
-        if (!adminPassword) throw new Error('Admin password not provided');
-        
-        const hashedPassword = await bcrypt.hash(adminPassword, 10);
-        
-        await prisma.user.upsert({
-            where: { email: adminEmail },
-            update: {
-                password: hashedPassword,
-                updatedAt: new Date()
-            },
-            create: {
-                email: adminEmail,
-                password: hashedPassword,
-                userType: 'ADMIN',
-                firstName: 'Admin',
-                lastName: 'User',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                phoneNum: '1234567890',
-            }
-        });
-        
-        console.log('Admin user created successfully');
-        console.log('Email:', adminEmail);
-        console.log('Password:', adminPassword);
-    } catch (error) {
-        console.error('Error creating admin user:', error);
-        process.exit(1);
-    } finally {
-        await prisma.$disconnect();
-    }
-}
-
-createAdminUser();
-EOF
-)
+NODE_SCRIPT=$(cat startup-database.txt)
 
 if ! node -e "$NODE_SCRIPT"; then
     log_error "Failed to create admin user"
     exit 1
 fi
+
+log_info "Admin user created successfully"
 
 echo -e "${GREEN}✅ Setup completed successfully!${NC}"
 echo "Admin credentials:"
@@ -189,11 +145,29 @@ echo "Username: admin"
 echo "Password: Admin123!"
 echo ""
 
-# Build and run Docker container
 
+# Build and run Docker container
+log_info "Starting Docker build process..."
 log_info "Building Docker image..."
+
 if ! docker build -t scriptorium-image .; then
     log_error "Failed to build Docker image"
     exit 1
 fi
 
+log_info "Docker image built successfully"
+
+# Check if a container with the same name already exists
+if [ "$(docker ps -aq -f name=scriptorium-container)" ]; then
+    log_warn "Container with the name 'scriptorium-container' already exists. Removing it..."
+    docker rm -f scriptorium-container
+    log_info "Existing container removed"
+fi
+
+log_info "Running Docker container..."
+if ! docker run -p 3000:3000 --name scriptorium-container scriptorium-image; then
+    log_error "Failed to run Docker container"
+    exit 1
+fi
+
+log_info "Docker container is running successfully"

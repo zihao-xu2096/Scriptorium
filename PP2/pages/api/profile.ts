@@ -20,11 +20,13 @@ async function handler(req: ExtendedRequest, res: NextApiResponse) {
     }
 
     return res.status(200).json({
+      id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       phoneNum: user.phoneNum,
       avatarUrl: user.avatarUrl,
+      userType: user.userType
     });
   } else {
     res.status(405).json({ message: 'Method Not Allowed' });

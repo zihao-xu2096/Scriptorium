@@ -11,36 +11,45 @@ export function NavBar() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  return loading ? 
-  <header className="bg-blue-600 p-4">
-     <div className="flex justify-center items-center">
-       <span className="text-white">Loading...</span> {/* Loading message */}
-     </div>
-   </header> :
-  <header className="p-4">
+  console.log(user);
+
+  return loading ?
+    <header className="bg-blue-600 p-4">
+      <div className="flex justify-center items-center">
+        <span className="text-white">Loading...</span> {/* Loading message */}
+      </div>
+    </header> :
+    <header className="bg-blue-600 p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
         </Link>
 
-        <div className="h-8 border-2 border-gray-500 grow mx-4"></div>
+        <div className="h-8 border-0 border-gray-500 grow mx-4"></div>
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
+          <Link href="/blogs" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+            Blogs (IMPLEMENT LINK)
+          </Link>
+          <span className="text-white opacity-50">|</span>
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            Search
+            Code Templates
           </Link>
           {user ? (
             <>
-              <Link href="/newtemplate" className="text-white hover:text-gray-300">
-                Create
-              </Link>
-              {user.userType === "ADMIN" && 
-              (<>
-                <Link href="/reports">Reports</Link>
-              </>)}
+              {user.userType === "ADMIN" && (
+                <>
+                  <span className="text-white opacity-50">|</span>
+                  <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                    Reports
+                  </Link>
+                </>
+              )}
+              <span className="text-white opacity-50">|</span>
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 {`${user.firstName} ${user.lastName}`}
               </Link>
+              <span className="text-white opacity-50">|</span>
               <button
                 onClick={logout}
                 className="text-white hover:text-gray-300 transition duration-200 ease-in-out"

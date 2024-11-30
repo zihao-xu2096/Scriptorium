@@ -34,6 +34,7 @@ export default function Profile() {
   const [authorized, setAuthorized] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 4;
+
   useEffect(() => {
     const fetchUser = async () => {
       const accessToken = localStorage.getItem('accessToken');
@@ -115,8 +116,8 @@ export default function Profile() {
         },
       })
       const postData = await resPosts.json();
-      console.log(postData)
-      setPosts(postData);
+      console.log("Fetched posts::", postData);
+      setPosts(Array.isArray(postData.posts) ? postData.posts : []); // Ensure posts is always an array
     };
 
     fetchUser();
@@ -135,9 +136,16 @@ export default function Profile() {
       body: JSON.stringify({ firstName, lastName, phoneNum, avatarUrl }),
     });
 
+    if (res.status === 400) {
+      alert('Invalid phone number. Must be greater 9 digits and numerical only.');
+      return;
+    }
+
     if (res.status !== 200) {
+      console.log('Update failed');
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
+        console.log('No refresh token');
         setAuthorized(false);
         return;
       }
@@ -149,6 +157,7 @@ export default function Profile() {
       })
 
       if (refreshRes.status !== 200) {
+
         setAuthorized(false);
         alert('Update failed');
         return;
@@ -164,12 +173,10 @@ export default function Profile() {
     setCurrentPage(page);
   };
 
-
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(posts.length / postsPerPage);
-
 
   if (!authorized) {
     return (
@@ -185,12 +192,13 @@ export default function Profile() {
   }
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <div>Loading... </div>;
   }
 
   return (
+    <>
+      <NavBar />
       <div className="flex flex-col items-center bg-gray-900 min-h-screen">
-        <NavBar />
         <div className="flex flex-row items-center bg-gray-900 min-h-screen">
 
           <div className="w-[600px] mx-10 p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
@@ -292,30 +300,30 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>
-                        ))}
+              ))}
             </div>
 
             <div className="flex justify-center space-x-2 mt-4">
               {Array.from({ length: totalPages }, (_, index) => (
-              <button
-              key={index}
-              onClick={() => handlePageChange(index + 1)}
-              className={`px-3 py-1 rounded-md ${
-              currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
-              }`}
-              >
-              {index + 1}
-              </button>
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-600 text-gray-300'
+                  }`}
+                >
+                  {index + 1}
+                </button>
               ))}
             </div>
           </div>
 
         </div>
-    </div>
-    
+      </div>
+    </>
   );
 }

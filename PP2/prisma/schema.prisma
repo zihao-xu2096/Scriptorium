@@ -21,7 +21,7 @@ model User {
   firstName        String
   lastName         String
   avatarUrl        String? // URL of Avatar image
-  phoneNum         String?         @unique
+  phoneNum         String         @unique
   createdTemplates CodeTemplate[] @relation("AuthoredTemplates")
   savedTemplates   CodeTemplate[] @relation("SavedTemplates")
   posts            Post[] // One-to-many relation
@@ -45,7 +45,7 @@ model CodeTemplate {
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   parentId    Int?
   children    CodeTemplate[] @relation("ForkedTemplates")
-  tags        TemplateTag[]
+  tags        TemplateTag[]  @relation("CodeTemplateToTag")
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   posts       Post[]
@@ -54,7 +54,7 @@ model CodeTemplate {
 model TemplateTag {
   id            Int            @id @default(autoincrement())
   name          String         @unique
-  codeTemplates CodeTemplate[]
+  codeTemplates CodeTemplate[] @relation("CodeTemplateToTag")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
