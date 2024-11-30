@@ -25,7 +25,7 @@ export function NavBar() {
           Scriptorium
         </Link>
 
-        <div className="h-8 border-2 border-gray-500 grow mx-4"></div>
+        <div className="h-8 border-0 border-gray-500 grow mx-4"></div>
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
           <Link href="/blogs" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
