@@ -91,9 +91,8 @@ async function populateDatabase() {
     console.log("Creating Templates...");
     const languages = [
         "JavaScript", "Python", "TypeScript", "Java", "C++",
-        "Ruby", "Go", "PHP", "Swift", "Rust",
-        "C#", "Kotlin", "Scala", "R", "MATLAB",
-        "Shell", "SQL", "Perl", "Haskell", "Lua"
+        "Ruby", "Go", "PHP", "Rust",
+        "Shell", "C"
     ];
     const predefinedTags = [
       'OS', 'Beginner', 'Advanced', 'C++', 'Python', 'JavaScript',
@@ -127,7 +126,7 @@ async function populateDatabase() {
                 codeSnippet = `print('Template ${i + 1}')`;
                 break;
             case "TypeScript":
-                codeSnippet = `function greet(): void {\n  console.log('Template ${i + 1}');\n}`;
+                codeSnippet = `function greet(): void {\n  console.log('Template ${i + 1}');\n}\ngreet();`;
                 break;
             case "Java":
                 codeSnippet = `public class Template${i + 1} {\n  public static void main(String[] args) {\n    System.out.println("Template ${i + 1}");\n  }\n}`;
@@ -144,41 +143,17 @@ async function populateDatabase() {
             case "PHP":
                 codeSnippet = `<?php\necho "Template ${i + 1}";`;
                 break;
-            case "Swift":
-                codeSnippet = `print("Template ${i + 1}")`;
-                break;
             case "Rust":
                 codeSnippet = `fn main() {\n  println!("Template {}", ${i + 1});\n}`;
                 break;
             case "C#":
                 codeSnippet = `using System;\n\nclass Program {\n  static void Main() {\n    Console.WriteLine("Template ${i + 1}");\n  }\n}`;
                 break;
-            case "Kotlin":
-                codeSnippet = `fun main() {\n  println("Template ${i + 1}")\n}`;
-                break;
-            case "Scala":
-                codeSnippet = `object Template${i + 1} {\n  def main(args: Array[String]): Unit = {\n    println("Template ${i + 1}")\n  }\n}`;
-                break;
-            case "R":
-                codeSnippet = `print(paste("Template", ${i + 1}))`;
-                break;
-            case "MATLAB":
-                codeSnippet = `fprintf('Template %d\\n', ${i + 1})`;
-                break;
             case "Shell":
                 codeSnippet = `echo "Template ${i + 1}"`;
                 break;
-            case "SQL":
-                codeSnippet = `SELECT 'Template ${i + 1}' AS message;`;
-                break;
-            case "Perl":
-                codeSnippet = `print "Template ${i + 1}\\n";`;
-                break;
-            case "Haskell":
-                codeSnippet = `main :: IO ()\nmain = putStrLn "Template ${i + 1}"`;
-                break;
-            case "Lua":
-                codeSnippet = `print("Template ${i + 1}")`;
+            case "C":
+                codeSnippet = `#include <stdio.h>\n\nint main() {\n  printf("Template %d\\n", ${i + 1});\n  return 0;\n}`;
                 break;
             default:
                 codeSnippet = `console.log('Template ${i + 1}');`;
