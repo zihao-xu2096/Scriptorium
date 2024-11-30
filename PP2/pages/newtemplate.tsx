@@ -1,6 +1,6 @@
 import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 
 interface Template {
@@ -25,6 +25,28 @@ export default function TemplateDetail() {
   const [explanation, setExplanation] = useState('');
   const [language, setLanguage] = useState('');
   const [code, setCode] = useState('');
+  const [currentUserID, setCurrentUserID] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchCurrentUserID();
+  }, [])
+  
+  const fetchCurrentUserID = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch('/api/user/fetchAuthorID', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserID(data.authorID);
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user ID:', error);
+    }
+  }
 
   const handleSubmit = async () => {
     try {
@@ -33,40 +55,42 @@ export default function TemplateDetail() {
         throw new Error('Not authenticated');
       }
 
-      const payload = JSON.parse(atob(accessToken.split('.')[1]));
-      const authorId = payload.userId;
+      const authorId = currentUserID
   
+      const data = {
+        title: title,
+        explanation: explanation,
+        language: language.toLowerCase(),
+        code: code,
+        authorId: authorId,
+      }
+
+      console.log(data)
+
       const response = await fetch('/api/template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          title,
-          explanation,
-          language,
-          code,
-          authorId,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const { success } = await refreshAccessToken();
         if (!success) {
-          alert('Unauthorized');
+          alert('Log in to save templates');
           const errorData = await response.json();
-          alert(`Failed to create template: ${errorData.error || response.statusText}`);
           setTimeout(() => {
             router.push('/login');
           }, 100);
         }
+      } else {
+        const newTemplate = await response.json();
+        if (confirm("Successfully forked! Would you like to go to your new forked template?")) {
+          router.push(`/templateview/${newTemplate.template.id}`);
+        }
       }
-
-      const data = await response.json();
-      const templateId = data.id;
-      // Redirect to the new template's page
-      router.push(`/template/${templateId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create template');
     }
