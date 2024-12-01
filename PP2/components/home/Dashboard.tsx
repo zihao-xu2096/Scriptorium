@@ -1,5 +1,4 @@
 import { UserContext } from '@/context/UserContext';
-import { UserPayload } from "@/new-types";
 import { CodeTemplate, Post } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -188,7 +187,7 @@ export const Dashboard = () => {
               </Link>
             </li>
             <li>
-              <Link href="/blogs/write">
+              <Link href="/blogs/create">
                 <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100/80 rounded-lg hover:bg-yellow-200 transition duration-300">
                   <span className="material-icons text-yellow-600">create</span>
                   <span className="text-yellow-600 font-normal text-lg md:text-base">Write Blog Post</span>
