@@ -1,9 +1,9 @@
-import { Autocomplete, AutocompleteProps, ComboboxLikeRenderOptionInput, ComboboxStringData, ComboboxStringItem, TagsInput } from '@mantine/core';
+import { Autocomplete, AutocompleteProps, TagsInput } from '@mantine/core';
+import '@mantine/core/styles.layer.css';
 import { CodeTemplate, Post } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useRef, useState, FormEvent, forwardRef, KeyboardEvent, MouseEvent, } from 'react';
-import '@mantine/core/styles.layer.css'
+import { useEffect, useState } from 'react';
 
 interface PostWithTags extends Post  {
   tags: {
@@ -185,7 +185,7 @@ export function SearchPosts() {
               setSearchvalue('');
             }}
             
-            className="p-3 bg-gray-800 border-gray-700 rounded-lg"  // Added text-white
+            className="p-3 bg-gray-800 border-gray-700 rounded-lg text-white"  // Added text-white
           >
             <option value="title" className="text-white">Title</option>
             <option value="content" className="text-white">Content</option>
@@ -332,6 +332,3 @@ export function SearchPosts() {
     </>
   )
 }
-
-
-
