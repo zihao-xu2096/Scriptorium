@@ -1,6 +1,6 @@
-import { Carousel } from '@mantine/carousel';
-import '@mantine/core/styles.css';
+import '@mantine/core/styles.layer.css'
 import '@mantine/carousel/styles.css';
+import { Carousel } from '@mantine/carousel';
 import { useState } from 'react';
 
 

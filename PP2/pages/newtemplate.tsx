@@ -1,6 +1,8 @@
+import { NavBar } from '@/components/navigation/NavBar';
+import { UserContext } from '@/context/UserContext';
 import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useContext, useState } from 'react';
 
 
 interface Template {
@@ -26,13 +28,11 @@ export default function TemplateDetail() {
   const [explanation, setExplanation] = useState('');
   const [language, setLanguage] = useState('');
   const [code, setCode] = useState('');
+  const { user, login } = useContext(UserContext);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchCurrentUserID();
-  }, [])
 
   const fetchCurrentUserID = async () => {
     try {
@@ -132,6 +132,11 @@ export default function TemplateDetail() {
         if (confirm("Successfully forked! Would you like to go to your new forked template?")) {
           router.push(`/templateview/${newTemplate.template.id}`);
         }
+        if (response.status === 400) {
+          const error = await response.json();
+          setRunError(error.error);
+          return
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create template');
@@ -180,14 +185,16 @@ export default function TemplateDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+    <>
+      <NavBar />
+      <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Template Title"
+            placeholder="Template Title*"
             className="w-full bg-gray-700 text-white text-3xl font-bold mb-4 p-2 rounded"
           />
 
@@ -196,7 +203,7 @@ export default function TemplateDetail() {
               type="text"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              placeholder="Programming Language"
+              placeholder="Programming Language*"
               className="px-3 py-1 text-sm font-medium bg-gray-700 text-indigo-400 rounded-full"
             />
           </div>
@@ -239,7 +246,7 @@ export default function TemplateDetail() {
           </div>
 
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">Description*</h2>
             <textarea
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
@@ -250,7 +257,7 @@ export default function TemplateDetail() {
           </div>
 
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white mb-2">Code</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">Code*</h2>
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -298,5 +305,6 @@ export default function TemplateDetail() {
         </div>
       </div>
     </div>
+    </>
   );
 }
