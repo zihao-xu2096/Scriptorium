@@ -1,4 +1,3 @@
-import { NavBar } from '@/components/navigation/NavBar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -210,24 +209,11 @@ export default function SearchTemplates() {
       <div className="max-w-7xl mx-auto mb-8">
         <button
           onClick={() => router.back()}
-          className="mb-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-full text-gray-300 hover:text-white flex items-center gap-2 transition-all duration-200 group"
+          className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
         >
-          <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+          <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
           <span className="font-medium flex items-center">Back </span>
-        </button>
+      </button>
 
           <h1 className="text-3xl font-bold text-white mb-6">Find Templates</h1>
 
