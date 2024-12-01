@@ -13,7 +13,13 @@ export interface CommentWithReplies extends Comment {
   replies: CommentWithReplies[];
   _count: {
     replies: number;
-  };
+  }
+  createdBy: {
+      firstName: true,
+      lastName: true,
+      avatarUrl: true
+    }
+  
 }
 
 interface CountedComments {
@@ -112,7 +118,7 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
           }
         } else {
           logout();
-          router.push("/unauthorized");
+          router.push("/login");
           return;
         }
       } else {
@@ -216,7 +222,7 @@ export const CommentSection = ({ blogId }: CommentSectionProps) => {
           }
         } else {
           logout();
-          router.push("/unauthorized");
+          router.push("/login");
           return;
         }
       } else {

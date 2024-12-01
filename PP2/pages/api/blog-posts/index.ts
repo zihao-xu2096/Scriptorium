@@ -79,6 +79,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
       }
+      throw error
     }
   } else if (req.method === "GET") {
     const { author, title, content, tags, templates, page = 1, limit = 10, sortBy }: BlogPostsQuery = req.query;

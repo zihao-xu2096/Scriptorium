@@ -33,9 +33,6 @@ export default function TemplateDetail() {
   const [tagInput, setTagInput] = useState('');
   const [currentUserID, setCurrentUserID] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchCurrentUserID();
-  }, [])
 
   const fetchCurrentUserID = async () => {
     try {

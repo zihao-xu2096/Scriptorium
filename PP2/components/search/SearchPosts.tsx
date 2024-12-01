@@ -1,8 +1,8 @@
-import { Autocomplete, TagsInput } from '@mantine/core';
+import { Autocomplete, AutocompleteProps, ComboboxLikeRenderOptionInput, ComboboxStringData, ComboboxStringItem, TagsInput } from '@mantine/core';
 import { CodeTemplate, Post } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, FormEvent, forwardRef, KeyboardEvent, MouseEvent, } from 'react';
 import '@mantine/core/styles.layer.css'
 
 interface PostWithTags extends Post  {
@@ -36,23 +36,6 @@ interface CountedPosts {
   count: number
 }
 
-const [templateOptions, setTemplateOptions] = useState<Record<string, { author: string, title: string, language: string }>>({});
-const [templateData, setTemplateData] = useState([])
-
-const renderOption = (template: TemplateWithTags) => {(
-    <div key={template.id} className="flex items-center p-3 border-b hover:bg-gray-100 cursor-pointer">
-      <div className="flex-1">
-        <h3 className="text-lg font-semibold">{template.title}</h3>
-        <p className="text-sm text-gray-600">{template.explanation}</p>
-        <div className="mt-1 text-xs text-gray-500">
-          <span className="font-semibold">Tags:</span> {template.tags.join(', ')}
-        </div>
-        <div className="text-xs text-gray-500">Author: {template.author.firstName + " " + template.author.lastName}</div>
-      </div>
-    </div>
-  );
-};
-
 const ITEMS_PER_PAGE = 21; 
 
 export function SearchPosts() {
@@ -62,9 +45,28 @@ export function SearchPosts() {
   const [searchTerm, setSearchTerm] = useState('title');
   const [searchValue, setSearchvalue] = useState('');
   const [error, setError] = useState('');
-  const [templates, setTemplates] = useState([]);
+  const [templates, setTemplates] = useState<Record<string, {title: string, explanation: string, tags: string[], author: string}>>({});
+  const [templateIds, setTemplateIds] = useState([])
+  const [templateSearch, setTemplateSearch] = useState('');
 
   const router = useRouter();
+
+  
+  const renderOption: AutocompleteProps['renderOption'] = ({option}) => {
+    return (
+      <div className="flex items-center p-3 border-b hover:bg-gray-100 cursor-pointer">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold">{templates[option.value].title || "No Title"}</h3>
+          <p className="text-sm text-gray-600">{templates[option.value].explanation || ""}</p>
+          <div className="mt-1 text-xs text-gray-500">
+            <span className="font-semibold">Tags:</span> {templates[option.value].tags.join(', ') || "[no tags]"}
+          </div>
+          <div className="text-xs text-gray-500">Author: {templates[option.value].author}</div>
+        </div>
+      </div>
+    );
+  };
+
 
   const fetchPosts = async () => {
     const accessToken = localStorage.getItem('accessToken');
@@ -95,10 +97,11 @@ export function SearchPosts() {
     }
   };
 
+  
   const fetchTemplates = async () => {
     const accessToken = localStorage.getItem('accessToken');
     try {
-      const response = await fetch(`/api/template`, {
+      const response = await fetch(`/api/template?title=${templateSearch}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -111,7 +114,17 @@ export function SearchPosts() {
       }
 
       const results = await response.json();
-      setTemplates(results);
+      console.log(results)
+      setTemplateIds(results.map((template: TemplateWithTags) => template.id.toString()));
+      setTemplates(results.reduce((prev: Record<string, {title: string, explanation: string, tags: string[], author: string}>, cur: TemplateWithTags) => {
+        prev[cur.id.toString()] = {
+          title: cur.title,
+          explanation: cur.explanation,
+          tags: cur.tags.map((tag) => tag.name),
+          author: cur.author.firstName + " " + cur.author.lastName
+        } 
+        return prev
+      }, {}))
       
     } catch (error) {
       console.error(error);
@@ -122,7 +135,7 @@ export function SearchPosts() {
     const fetchPosts = async () => {
       const accessToken = localStorage.getItem('accessToken');
       try {
-        const response = await fetch(`/api/blog-posts${searchValue ? "?" : ""}`, {
+        const response = await fetch(`/api/blog-posts${searchValue ? `?${searchTerm}=${searchValue}` : ""}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -147,6 +160,7 @@ export function SearchPosts() {
 
 
   return (
+    <>
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto mb-8">
         <button
@@ -194,7 +208,9 @@ export function SearchPosts() {
               <Autocomplete className="flex-1 py-3 border-gray-700
                 placeholder-gray-400 rounded-lg text-black
                 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                data={templates} renderOption={renderOption} />
+                data={templateIds} renderOption={renderOption} value={templateSearch} onSelect={fetchTemplates} onChange={
+                  (value) => setTemplateSearch(value)
+                  } />
               </> : 
               <input
                 type="text"
@@ -213,6 +229,7 @@ export function SearchPosts() {
                    hover:bg-indigo-700 focus:outline-none focus:ring-2 
                    focus:ring-offset-2 focus:ring-indigo-500 
                    focus:ring-offset-gray-900" // Added offset color
+            onClick={fetchPosts}
           >
             Search
           </button>
@@ -311,5 +328,10 @@ export function SearchPosts() {
         </div>}
       </div>
     </div>
-  );
+    
+    </>
+  )
 }
+
+
+

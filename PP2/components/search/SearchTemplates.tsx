@@ -479,6 +479,5 @@ export default function SearchTemplates() {
           </div>
         </div>
       </div>
-    </>
   );
 }

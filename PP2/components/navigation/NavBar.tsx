@@ -1,7 +1,7 @@
 import { UserContext } from "@/context/UserContext";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useState } from "react";
+import { MouseEventHandler, useContext, useEffect, useState } from "react";
 
 
 export function NavBar() {
@@ -88,21 +88,41 @@ export function NavBar() {
      
   }, [])
 
-  return <header className="bg-blue-600 p-4">
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selection, setSelection] = useState('');
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSelection = (type: string) => {
+    setSelection(type);
+    setIsModalOpen(false);  // Close modal after selection
+    if (type === 'template') {
+      router.push('/newtemplate')
+    } else {
+      router.push('/blogs/create')
+    }
+  };
+
+  
+
+  return <> <header className="bg-blue-600 p-4">
       <div className="flex items-center justify-between">
         <Link href="/" className="text-white text-2xl font-bold">
           Scriptorium
         </Link>
 
-        <div className="h-8  grow mx-4"></div>
+        <div className="h-8 border-gray-500 grow mx-4"></div>
 
         <nav className="hidden md:flex space-x-6" id="nav-links">
-          <Link href="/blogs" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            Blogs (IMPLEMENT LINK)
-          </Link>
           <span className="text-white opacity-50">|</span>
           <Link href="/search" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
-            Explore
+            Search
           </Link>
           {user ? (
             <>
@@ -114,6 +134,9 @@ export function NavBar() {
                   </Link>
                 </>
               )}
+              <button  className="text-white hover:text-gray-300" onClick={handleOpenModal}>
+                Create
+              </button>
               <span className="text-white opacity-50">|</span>
               <Link href="/profile" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
                 {`${user.firstName} ${user.lastName}`}
@@ -174,9 +197,17 @@ export function NavBar() {
           </Link>
           {user ? (
             <>
-              <Link href="/newtemplate" className="text-white hover:text-gray-300">
+            {user.userType === "ADMIN" && (
+                <>
+                  <span className="text-white opacity-50">|</span>
+                  <Link href="/admin/reports" className="text-white hover:text-gray-300 transition duration-200 ease-in-out">
+                    Reports
+                  </Link>
+                </>
+              )}
+              <button  className="text-white hover:text-gray-300" onClick={handleOpenModal}>
                 Create
-              </Link>
+              </button>
               <Link href="/profile" className="text-white hover:text-gray-300">
                 {`${user.firstName} ${user.lastName}`}
               </Link>
@@ -200,4 +231,56 @@ export function NavBar() {
         </div>
       )}
     </header>
+    <Modal isOpen={isModalOpen} onClose={handleCloseModal} onSelect={handleSelection} />
+    </>
 };
+
+
+interface ModalProps {
+  isOpen: boolean
+  onClose: MouseEventHandler<HTMLButtonElement>
+  onSelect: Function
+}
+
+const Modal = ({ isOpen, onClose, onSelect }: ModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+      <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
+        <div className="bg-white rounded-lg p-6 w-80">
+          <div className="text-center text-2xl font-semibold mb-6">Select an Option</div>
+          
+          {/* Flexbox container for options in columns */}
+          <div className="flex justify-between">
+            {/* Create Blog Post Option */}
+            <button
+              className="flex flex-col items-center w-28 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={() => onSelect('blog')}
+            >
+              <span className="material-icons text-3xl mb-2">article</span>
+              <span>Create Blog Post</span>
+            </button>
+  
+            {/* Create Code Template Option */}
+            <button
+              className="flex flex-col items-center w-28 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+              onClick={() => onSelect('template')}
+            >
+              <span className="material-icons text-3xl mb-2">code</span>
+              <span>Create Code Template</span>
+            </button>
+          </div>
+  
+          <div className="mt-4 flex justify-end">
+            <button
+              className="text-gray-600 hover:text-gray-800"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
