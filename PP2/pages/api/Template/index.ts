@@ -38,7 +38,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!title || !explanation || !language || !code || !authorId) {
         return res.status(400).json({
           error:
-            "Missing required fields: title, explanation, language, code, and authorId are required",
+            "Missing required fields",
         });
       }
 

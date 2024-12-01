@@ -43,6 +43,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Post | ApiError
             { isHidden: false }, 
             isExtended(req) ? { userId: req.user.id } : undefined
           ].filter(value => !!value)} : {}), 
+        }, include: { 
+          tags: {
+            select: {
+              label: true
+            }
+          },
+          linkedTemplates: {
+            select: {
+              id: true
+            }
+          }
         }
       });
 

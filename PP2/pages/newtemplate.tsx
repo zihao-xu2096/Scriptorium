@@ -1,6 +1,6 @@
 import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 
 interface Template {
