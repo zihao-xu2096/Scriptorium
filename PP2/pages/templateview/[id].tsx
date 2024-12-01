@@ -1,6 +1,8 @@
+import { NavBar } from '@/components/navigation/NavBar';
+import { UserContext } from '@/context/UserContext';
 import { refreshAccessToken } from '@/utils/refresh';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { use, useContext, useEffect, useState } from 'react';
 import { getAuthorName } from 'utils/authors';
 
 interface Template {
@@ -37,6 +39,9 @@ export default function TemplateDetail() {
   const [tagInput, setTagInput] = useState('');
 
   const [editedCode, setEditedCode] = useState('');
+  const [stdin, setStdin] = useState('');
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
   const [output, setOutput] = useState<string>('');
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
@@ -60,6 +65,8 @@ export default function TemplateDetail() {
   useEffect(() => {
     if (template) {
       setEditedCode(template.code);
+      setEditedTitle(template.title);
+      setEditedDescription(template.explanation);
     }
   }, [template]);
 
@@ -140,7 +147,7 @@ export default function TemplateDetail() {
       if (!template) {
         throw new Error('Template not found');
       }
-      if (Number(template.authorId) !== Number(currentUserID)) {
+      if (Number(template.authorId) !== user?.id) {
         handleFork();
         return;
       }
@@ -252,13 +259,14 @@ export default function TemplateDetail() {
         body: JSON.stringify({
           language: normalizedLanguage,
           code: currentCode,
-          stdin: '', // Add stdin support later if needed
+          stdin: stdin, // Add stdin support later if needed
         }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to compile code');
+        console.log(data)
+        throw new Error(data.error || 'Failed to compile code');
       }
 
       setOutput(data.output || 'No output');
@@ -285,114 +293,82 @@ export default function TemplateDetail() {
     );
   }
   return (
+    <>
+    <NavBar />
     <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <button
-          onClick={() => router.push('/search')}
+          onClick={() => router.back()}
           className="mb-4 px-4 py-2 text-gray-300 hover:text-white flex items-center transition-colors duration-200 group"
         >
           <span className="mr-2 text-lg font-medium group-hover:transform group-hover:-translate-x-1 transition-transform duration-200 flex items-center">←</span>
-          <span className="font-medium flex items-center">Back to Search</span>
+          <span className="font-medium flex items-center">Back</span>
         </button>
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-          {isEditing ? (
-            <>
+        {isEditing ? (
               <input
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Template Title"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="Template Title*"
                 className="w-full bg-gray-700 text-white text-3xl font-bold mb-4 p-2 rounded"
               />
+            ) : (
+              <h1 className="text-3xl font-bold text-white mb-4">{template.title}</h1>
+            )}
 
-              <div className="mb-6">
-                <input
-                  type="text"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="Programming Language"
-                  className="px-3 py-1 text-sm font-medium bg-gray-700 text-indigo-400 rounded-full"
-                />
-              </div>
-
-              {/* Set Tags */}
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white mb-2">Tags</h2>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map((tag) => (
+          { isEditing ? ( 
+              <></>
+            ) : (
+              template.tags.length > 0 ?
+              <>
+                <div className="mb-2">
+                  <span className="text-gray-300">tags : </span>
+                  {template.tags.length > 0 && template.tags.map((tag: String) => (
                     <span
-                      key={tag}
-                      className="px-3 py-1 bg-indigo-600 text-white rounded-full flex items-center gap-2"
+                      key={tag.toString()}
+                      className="px-3 py-1 mr-1 text-sm font-medium text-green-400 
+                    bg-green-900 rounded-full"
                     >
                       {tag}
-                      <button
-                        onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-red-300"
-                      >
-                        ×
-                      </button>
                     </span>
                   ))}
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                    placeholder="Add tags"
-                    className="flex-1 bg-gray-700 text-gray-300 p-2 rounded"
-                  />
-                  <button
-                    onClick={handleAddTag}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                  >
-                    Add Tag
-                  </button>
-                </div>
-              </div>
+              </> : 
+              <div className="mb-2">
+              <span className="text-gray-300">[No tags yet!]</span>
+            </div>
+            )}  
+          
+          <div className="mb-6">
+                <span className="text-gray-300">language : </span>
+                <span className="px-3 py-1 text-sm font-medium text-indigo-400 
+                              bg-indigo-900 rounded-full">
+                  {template.language}
+                </span>
+          </div>
+          <div className="mb-6">
+          {isEditing ? (
+            <>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
+                <h2 className="text-xl font-semibold text-white mb-2">Description*</h2>
                 <textarea
-                  value={explanation}
-                  onChange={(e) => setExplanation(e.target.value)}
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
                   placeholder="Enter template description"
                   className="w-full bg-gray-700 text-gray-300 p-2 rounded"
                   rows={4}
                 />
               </div>
             </>
-          ) : (
-            <>
-              <h1 className="text-3xl font-bold text-white mb-4">
-                {template.title}
-              </h1>
-              <div className="mb-2">
-                <span className="text-gray-300">language : </span>
-                <span className="px-3 py-1 text-sm font-medium text-indigo-400 bg-indigo-900 rounded-full">
-                  {template.language}
-                </span>
-              </div>
-              <div className="mb-6">
-                <div>
-                  <span className="text-gray-300">tags : </span>
-                  {template.tags.map((tag: String) => (
-                    <span key={tag.toString()} className="px-3 py-1 mr-1 text-sm font-medium text-green-400 bg-green-900 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-6">
+            ) : (
+              <>
                 <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
-                <p className="text-gray-400">
-                  {template.explanation}
-                </p>
-              </div>
-            </>
-          )}
-
+                <p className="text-gray-400">{template.explanation}</p>
+              </>
+            )}
+            </div>
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
             {isEditing ? (
@@ -425,15 +401,57 @@ export default function TemplateDetail() {
             )}
           </div>
 
+          {!isEditing && 
+          <textarea placeholder='stdin' 
+            value={stdin}
+            onChange={(e) => setStdin(e.target.value)}
+            className="w-full my-2 bg-black text-gray-300 font-mono p-2 rounded"
+            rows={2}
+          />}
+          <div className='flex justify-stretch content-stretch items-stretch flex-row my-4 gap-4'>
+          {isEditing ? (
+              <>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 grow"
+              >
+                {Number(template.authorId) === user?.id ? 'Save' : 'Save and Fork'}
+              </button>
+
+              <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 grow"
+              >
+                Cancel
+              </button>
+              </>
+            ) : (
+              
+              user && ( user.id === Number(template.authorId) ?
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 grow"
+              >
+                Edit
+              </button> : 
+              <button onClick={handleFork} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 grow">
+                Fork
+              </button>)
+            )}
+          </div>
+
           {/* Add Run button and output display here */}
+          {!isEditing &&
           <div className="mt-4">
+            <div className='flex'>
             <button
               onClick={handleRun}
               disabled={isRunning}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600"
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600 grow"
             >
               {isRunning ? 'Running...' : 'Run Code'}
             </button>
+            </div>
 
             {runError && (
               <div className="mt-4 p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-400">
@@ -449,7 +467,7 @@ export default function TemplateDetail() {
                 </pre>
               </div>
             )}
-          </div>
+          </div>}
 
           <div className="mt-4 text-gray-400">
             Created by {template.author || 'Unknown Author'}
@@ -468,5 +486,6 @@ export default function TemplateDetail() {
         </div>
       </div>
     </div>
+    </>
   );
 }

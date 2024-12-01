@@ -49,8 +49,8 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       return;
     }
 
-    if (!content) {
-      res.status(400).json({ message: "Title missing" });
+    if (!content.trim()) {
+      res.status(400).json({ message: "Content missing" });
       return;
     }
 
@@ -135,6 +135,13 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       }, 
       include: {
         replies: true,
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true
+          }
+        },
         _count: {
           select: {
             replies: true
@@ -161,6 +168,16 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         parentId: parentId === null ? parentId : parentId ? parseInt(parentId) : undefined
       }
     })
+
+    console.log({where: {
+      ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+      {OR: [
+        { isHidden: false }, 
+        isExtended(req) ? { userId: req.user.id } : undefined
+      ].filter(value => !!value)} : {}), 
+      postId: parseInt(postId),
+      parentId: parentId === null ? parentId : parentId ? parseInt(parentId) : undefined
+    }})
 
     res.status(200).json({ comments, count});
   } else {

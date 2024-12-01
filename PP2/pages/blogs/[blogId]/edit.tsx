@@ -1,4 +1,9 @@
-import React, { useCallback, useContext, useRef, useState } from 'react'
+import { NavBar } from '@/components/navigation/NavBar';
+import { refreshAccessToken } from '@/utils/refresh';
+import { TagsInput } from '@mantine/core';
+import { useRouter } from 'next/router';
+
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { Editable, withReact, useSlate, Slate, RenderElementProps, RenderLeafProps, ReactEditor, useFocused } from 'slate-react'
 import {
@@ -29,14 +34,17 @@ import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import InsertLinkIcon from '@mui/icons-material/InsertLink';
 
 import Link from 'next/link'
-import { LinkModal } from './LinkModal'
-import { Button } from './Button'
+import { LinkModal } from '@/components/editor/LinkModal'
+import { Button } from '@/components/editor/Button'
 import { Post } from '@prisma/client';
-import { UserContext } from '@/context/UserContext'
+import { attemptRefresh, UserContext } from '@/context/UserContext'
+import '@mantine/core/styles.layer.css'
 
 interface Options {
   [key: string]: string;
 }
+
+
 
 export interface PostWithDisplay extends Post {
   tags: {
@@ -146,16 +154,40 @@ interface EditorProps {
   post: PostWithDisplay
 }
 
-export function RichTextEditor ({readOnly, initialValue, post }: EditorProps) {
-  const { user, loading, login } = useContext(UserContext);
+export interface PostWithDisplay extends Post {
+  tags: {
+      label: string;
+  }[],
+  createdBy: {
+    firstName: string;
+    lastName: string;
+  }, votes: {
+    id: number;
+    userId: number;
+    voteType: string;
+    postId: number;
+  }[];
+}
+
+
+export default function BlogPost() {
+  const router = useRouter();
+  const { blogId } = router.query;
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const { user, login, logout } = useContext(UserContext);
+  const [tags, setTags] = useState<string[]>([]);
+  const [post, setPost] = useState<PostWithDisplay | null>(null)
   const renderElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
   const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
-  const [editor] = useState(() => withInlines(withHistory(withReact(createEditor()))));
   const [content, setContent] = useState<Descendant[]>([{type:"paragraph",align:"center",children:[{text:""}]}]);
   const [templates, setTemplates] = useState<number[]>([]);
 
   const ref = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const [editor] = useState(() => withInlines(withHistory(withReact(createEditor()))));
+
 
   const insertLink = (editor: Editor) => {
     return (template: TemplateInfo) => {
@@ -170,122 +202,248 @@ export function RichTextEditor ({readOnly, initialValue, post }: EditorProps) {
     }
   }
 
-  /*
   useEffect(() => {
-    if (target && chars.length > 0) {
-      const el = ref.current
-      if (!el) {
-        return;
+    const fetchPost = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      try {
+        const response = await fetch(`/api/blog-posts/${blogId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.log(response);
+          return;
+        }
+
+        const results: PostWithDisplay = await response.json();
+        console.log(results)
+        setPost(results)
+        setTags(results.tags.map(tag => tag.label))
+        setTitle(results.title)
+        setDescription(results.description || '')
+        setContent(JSON.parse(results.content))
+
+      } catch (error) {
+        console.error(error);
       }
-      const domRange = ReactEditor.toDOMRange(editor, target)
-      const rect = domRange.getBoundingClientRect()
-      el.style.top = `${rect.top + window.scrollY + 24}px`
-      el.style.left = `${rect.left + window.scrollX}px`
+    };
+
+    if (blogId) {
+      fetchPost();
     }
-  }, [chars.length, editor, index, search, target, isLinkSearchActive])*/
+  }, [router.isReady, blogId]); // Dependencies include `blogId` to re-fetch when it changes
+
+  const handleSubmit = async () => {
+    let accessToken = localStorage.getItem('accessToken');
+    const data = {
+      title: title,
+      description: description || null
+      ,
+      tags: tags,
+      content: JSON.stringify(content),
+      templates: templates
+    }
+
+    console.log(data)
+
+    let response = await fetch(`/api/blog-posts/${blogId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(data),
+    });
+    let post;
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          accessToken = localStorage.getItem('accessToken');
+          login(refreshed);
+    
+          const response = await fetch('/api/blog-posts', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            //set the error
+            return;
+          } else {
+            post = await response.json();
+          }
+        } else {
+          logout();
+          router.push("/login");
+          return;
+        }
+      } else {
+        //set error
+      }
+    } 
+    post = await response.json()
+    const results: PostWithDisplay = await response.json();
+        console.log(results)
+        setPost(results)
+        setTags(results.tags.map(tag => tag.label))
+        setTitle(results.title)
+        setDescription(results.description || '')
+        setContent(JSON.parse(results.content))
+  };
+
+  interface REditorProps {
+    content: Descendant[]
+    setContent: Function
+  }
 
   return (
     <>
-    <Slate 
-    editor={editor} 
-    initialValue={initialValue}
+      <NavBar />
+      <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title*"
+            className="w-full bg-gray-700 text-white text-3xl font-bold mb-4 p-2 rounded"
+          />
 
-    onValueChange={(value) => {
-      const isAstChange = editor.operations.some(
-      op => 'set_selection' !== op.type
-      )
-      editor.operations.forEach((operation) => {
-        if (operation.type === 'remove_node') {
-          const { node } = operation;
 
-          if (isElement(node) && isLinkElement(node) && node.template) {
-            console.log(node)
-            const indexOf = templates.findIndex(val => val === node.template?.id)
-            console.log(templates)
-            console.log(indexOf)
-            if (indexOf >= 0) {
-              const copy = [...templates];
-              copy.splice(indexOf, 1);
-              console.log(copy)
-              setTemplates(copy);
-            }
-          }
-        }
-      });
-      if (isAstChange) {
+          {/* Set Tags */}
+          <div className="flex mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Tags</h2>
+            <TagsInput label="Press enter to submit a tag" className="flex-1 p-3 bg-gray-800 border-gray-700 
+              placeholder-gray-400 rounded-lg shadow-sm 
+              focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+              value={tags}
+              onChange={(value) => {
+                setTags(value);
+              }} 
+              clearable />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Description</h2>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description"
+              className="w-full bg-gray-700 text-gray-300 p-2 rounded"
+              rows={4}
+            />
+          </div>
+          <>
+      <Slate 
+      editor={editor} 
+      initialValue={content || [{type:"paragraph",align:"center",children:[{text:"  "}]}]}
+  
+      onValueChange={(value) => {
+        const isAstChange = editor.operations.some(
+        op => 'set_selection' !== op.type
+        )
+
+        if (isAstChange) {
           const content = value;
+          console.log(content)
           setContent(content);
         }
-      }
-    }
-    >
-      {!readOnly && <div>
-        <LinkButton showDialog={() => dialogRef.current?.showModal()} />
-        <MarkButton format="bold" icon="format_bold"/>
-        <MarkButton format="italic" icon="format_italic" />
-        <MarkButton format="underline" icon="format_underlined" />
-        <MarkButton format="code" icon="code" />
-        <BlockButton format="heading-one" icon="looks_one"/>
-        <BlockButton format="heading-two" icon="looks_two" />
-        <BlockButton format="block-quote" icon="format_quote" />
-        <BlockButton format="numbered-list" icon="format_list_numbered"/>
-        <BlockButton format="bulleted-list" icon="format_list_bulleted"/>
-        <BlockButton format="left" icon="format_align_left"/>
-        <BlockButton format="center" icon="format_align_center" />
-        <BlockButton format="right" icon="format_align_right" />
-        <BlockButton format="justify" icon="format_align_justify" />
-      </div>}
-      <Editable
-        renderElement={renderElement}
-        renderLeaf={renderLeaf}
-        placeholder="Enter some rich text…"
-
-        className="w-full min-h-80 bg-gray-900 my-4 rounded-md"
-        spellCheck
-        autoFocus
-        readOnly={readOnly}
-        onKeyDown={(event) => {
-          for (const hotkey in HOTKEYS) {
-            if (isHotkey(hotkey, event as any)) {
-              const mark = HOTKEYS[hotkey];
-              if (isMarkFormat(mark)) {
-                toggleMark(editor, mark);
+        editor.operations.forEach((operation) => {
+          if (operation.type === 'remove_node') {
+            const { node } = operation;
+  
+            if (isElement(node) && isLinkElement(node) && node.template) {
+              console.log(node)
+              const indexOf = templates.findIndex(val => val === node.template?.id)
+              console.log(templates)
+              console.log(indexOf)
+              if (indexOf >= 0) {
+                const copy = [...templates];
+                copy.splice(indexOf, 1);
+                console.log(copy)
+                setTemplates(copy);
               }
             }
           }
-        }}
-        onBlur={
-          (e) => {
-            if (ref.current?.contains(e.relatedTarget)) {
-              return;
+        });
+        }
+      }
+      >
+        {<div>
+          <LinkButton showDialog={() => dialogRef.current?.showModal()} />
+          <MarkButton format="bold" icon="format_bold"/>
+          <MarkButton format="italic" icon="format_italic" />
+          <MarkButton format="underline" icon="format_underlined" />
+          <MarkButton format="code" icon="code" />
+          <BlockButton format="heading-one" icon="looks_one"/>
+          <BlockButton format="heading-two" icon="looks_two" />
+          <BlockButton format="block-quote" icon="format_quote" />
+          <BlockButton format="numbered-list" icon="format_list_numbered"/>
+          <BlockButton format="bulleted-list" icon="format_list_bulleted"/>
+          <BlockButton format="left" icon="format_align_left"/>
+          <BlockButton format="center" icon="format_align_center" />
+          <BlockButton format="right" icon="format_align_right" />
+          <BlockButton format="justify" icon="format_align_justify" />
+        </div>}
+        <Editable
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          placeholder="Enter some rich text…"
+  
+          className="w-full min-h-80 bg-gray-900 my-4 rounded-md"
+          spellCheck
+          autoFocus
+          onKeyDown={(event) => {
+            for (const hotkey in HOTKEYS) {
+              if (isHotkey(hotkey, event as any)) {
+                const mark = HOTKEYS[hotkey];
+                if (isMarkFormat(mark)) {
+                  toggleMark(editor, mark);
+                }
+              }
+            }
+          }}
+          onBlur={
+            (e) => {
+              if (ref.current?.contains(e.relatedTarget)) {
+                return;
+              }
             }
           }
-        }
-      />
-    </Slate>
-    { !readOnly &&
-    <button onClick={async () => {
-      
-      const res = await fetch(`/api/blog-posts/${post.id}`, {
-        method: "PUT",
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
-          'Content-Type': "application/json"
-        },
-        body: JSON.stringify({
-          content: JSON.stringify(content),
-          templates,
+        />
+      </Slate>
+      <LinkModal onInsert={insertLink(editor)} ref={dialogRef} />
+      </>
 
-        })
-      })
+          <div className="mt-6">
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Save Changes
+            </button>
+          </div>
 
-      const message = await res.json();
-      console.log(message)
-    }}>submit</button>}
-    <LinkModal onInsert={insertLink(editor)} ref={dialogRef} />
-    </>
-  )
-}
+        </div>
+      </div>
+      </>
+  );
+} 
+
+
+
+
 
 const toggleBlock = (editor: Editor, format: 'left' | 'center' | 'right' | 'justify' |
   'block-quote' | 'numbered-list' | 'bulleted-list' | 'heading-one' | 'heading-two') => {

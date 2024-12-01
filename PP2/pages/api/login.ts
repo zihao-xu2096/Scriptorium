@@ -36,9 +36,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const refreshToken = generateRefreshToken(user);
     return res.status(200).json({
       message: 'Verified',
-      email: user.email,
       accessToken: accessToken,
       refreshToken: refreshToken,
+      ...user
     });
   } else {
     res.setHeader('Allow', ['POST']);

@@ -1,3 +1,4 @@
+import { protectedRoute } from '@/middleware/auth';
 import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { prisma } from '@/prisma/prisma';
 import { Comment } from '@prisma/client';
@@ -9,7 +10,7 @@ type CommentQuery = {
   commentId?: string
 }
 
-export default async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | ApiError>) {
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | ApiError>) {
   if (req.method === "GET") { 
     const { commentId: id, postId }: CommentQuery = req.query;
 
@@ -35,6 +36,16 @@ export default async function handler(req: ExtendedRequest | NextApiRequest, res
             { isHidden: false }, 
             isExtended(req) ? { userId: req.user.id } : undefined
           ].filter(value => !!value)} : {}), 
+        }, 
+        include: {
+          createdBy: {
+            select: {
+              firstName: true,
+              lastName: true,
+              avatarUrl: true
+            }
+          },
+          replies: true
         }
       });
 
@@ -101,3 +112,5 @@ export default async function handler(req: ExtendedRequest | NextApiRequest, res
     res.status(405).json({ message: "Method not allowed" });
   }
 }
+
+export default protectedRoute(handler, ["DELETE"])

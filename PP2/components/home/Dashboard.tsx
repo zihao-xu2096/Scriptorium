@@ -38,74 +38,6 @@ export const Dashboard = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    const fetchUserData = async (token: string) => {
-      try {
-        let response = await fetch('/api/profile', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.ok) {
-          if (refreshToken) {
-            const newToken = await fetchRefreshToken(refreshToken);
-            if (!newToken) {
-              router.push('/login');
-              return;
-            } else {
-              localStorage.setItem('accessToken', newToken);
-              response = await fetch('/api/profile', {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${newToken}`,
-                },
-              });
-            }
-          } else {
-            router.push('/login');
-            return;
-          }
-        }
-  
-        const userData: UserPayload = await response.json();
-        login(userData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    const fetchRefreshToken = async (token: string) => {
-      try {
-        const response = await fetch('/api/refresh', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.ok) {
-          return null;
-        }
-  
-        const accessToken = await response.json();
-        return accessToken.accessToken;
-      } catch (error) {
-        console.error(error);
-      } 
-    };
-
-    if (accessToken) {
-        fetchUserData(accessToken);
-    } else {
-        router.push('/login');
-    }
-  }, [])
-
-  useEffect(() => {
     const fetchData = async () => {
       if (user) {
         try {
@@ -124,7 +56,7 @@ export const Dashboard = () => {
           ]);
 
           if (responses.some((value) => value.status === 401)) {
-            router.push('/login');
+            router.push('/');
           } else if (responses.some(value => !value.ok)) {
             console.log(responses)
           }
@@ -133,12 +65,14 @@ export const Dashboard = () => {
             responses.map(response => response.json())
           );
 
-          setBlogPosts(blogPostsData);
+          setBlogPosts(blogPostsData.posts);
           setTemplates(templatesData.slice(0,3));
-          setMostValuedPosts(mostValued)
+          setMostValuedPosts(mostValued.posts);
         } catch (error) {
           console.error('Error fetching data:', error);
         }
+      } else {
+        router.push("/");
       }
     };
     
@@ -224,7 +158,7 @@ export const Dashboard = () => {
                     className="flex items-center space-x-3 p-2 bg-gray-700 rounded-md hover:bg-gray-600 transition duration-200"
                   >
                     <div className="flex-1">
-                      <Link href={`/blog/${post.id}`} className="font-semibold text-sm text-indigo-500 hover:text-indigo-400 truncate">
+                      <Link href={`/blogs/${post.id}`} className="font-semibold text-sm text-indigo-500 hover:text-indigo-400 truncate">
                           {post.title}
                       </Link>
                       <p className="text-xs text-gray-400 mt-1 truncate">{`${post.createdBy.firstName} ${post.createdBy.lastName}`}</p>
@@ -247,15 +181,15 @@ export const Dashboard = () => {
           <ul className="space-y-4">
             <li>
               <Link href="/newtemplate">
-                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition duration-300">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-indigo-100/80 rounded-lg hover:bg-indigo-200 transition duration-300">
                   <span className="material-icons text-indigo-600">add_circle</span>
                   <span className="text-indigo-600 font-normal text-lg md:text-base">Create New Template</span>
                 </div>
               </Link>
             </li>
             <li>
-              <Link href="/blog/write">
-                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition duration-300">
+              <Link href="/blogs/write">
+                <div className="flex items-center space-y-2 space-x-3 md:flex-col p-3 bg-yellow-100/80 rounded-lg hover:bg-yellow-200 transition duration-300">
                   <span className="material-icons text-yellow-600">create</span>
                   <span className="text-yellow-600 font-normal text-lg md:text-base">Write Blog Post</span>
                 </div>
@@ -263,7 +197,7 @@ export const Dashboard = () => {
             </li>
             <li>
               <Link href="/profile">
-                <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100 rounded-lg hover:bg-green-200 transition duration-300">
+                <div className="flex space-x-3 md:flex-col items-center space-y-2 p-3 bg-green-100/80 rounded-lg hover:bg-green-200 transition duration-300">
                   <span className="material-icons text-green-600">settings</span>
                   <span className="text-green-600 font-normal text-lg md:text-base">Account Settings</span>
                 </div>

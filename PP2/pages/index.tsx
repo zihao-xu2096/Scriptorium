@@ -1,15 +1,18 @@
 import Dashboard from "@/components/home/Dashboard";
+import localFont from "next/font/local";
+import { useContext, useEffect } from "react";
+import { UserContext } from "@/context/UserContext";
 import { LandingPage } from "@/components/home/Landing";
 import { Footer } from "@/components/navigation/Footer";
 import { NavBar } from "@/components/navigation/NavBar";
-import withAuth from "@/components/withAuth";
-import { UserContext } from "@/context/UserContext";
-import { useContext } from "react";
+import { useRouter } from "next/router";
+import { UserPayload } from "@/new-types";
 
-function Home() {
-  const { user } = useContext(UserContext);
+export default function Home() {
+  const { user, loading } = useContext(UserContext);
 
   return (
+    loading ? <h1>Loading...</h1> :
     <>
       <NavBar />
       {user ? <Dashboard /> : <LandingPage />}
@@ -17,5 +20,3 @@ function Home() {
     </>
   );
 }
-
-export default withAuth(Home);
