@@ -57,17 +57,6 @@ export default function TemplateDetail() {
   }, [template]);
 
   useEffect(() => {
-    if (template) {
-      setTitle(template.title);
-      setLanguage(template.language);
-      setTags(template.tags);
-      setExplanation(template.explanation);
-    }
-  }, [template]);
-
-  const { user, login } = useContext(UserContext);
-
-  useEffect(() => {
     if (id) {
       fetchTemplate();
     }
@@ -151,6 +140,9 @@ export default function TemplateDetail() {
   };
 
   const handleSave = async () => {
+    
+    fetchCurrentUserID();
+
     try {
       if (!template) {
         throw new Error('Template not found');
@@ -379,7 +371,21 @@ export default function TemplateDetail() {
             </div>
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
-            
+            {isEditing ? (
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                {currentUserID &&(Number(template.authorId) === Number(currentUserID)) ? 'Save' : 'Save and Fork'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Edit
+              </button>
+            )}
           </div>
           <div className="bg-gray-900 p-4 rounded-lg">
             {isEditing ? (

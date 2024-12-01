@@ -157,3 +157,17 @@ fi
 
 log_info "Docker image built successfully"
 
+# Check if a container with the same name already exists
+if [ "$(docker ps -aq -f name=scriptorium-container)" ]; then
+    log_warn "Container with the name 'scriptorium-container' already exists. Removing it..."
+    docker rm -f scriptorium-container
+    log_info "Existing container removed"
+fi
+
+log_info "Running Docker container..."
+if ! docker run -p 3000:3000 --name scriptorium-container scriptorium-image; then
+    log_error "Failed to run Docker container"
+    exit 1
+fi
+
+log_info "Docker container is running successfully"

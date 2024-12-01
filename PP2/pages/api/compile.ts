@@ -15,17 +15,8 @@ interface LanguageConfig {
 const languages: Record<string, LanguageConfig> = {
   'c': {
     fileType: 'c',
-    exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
+    exec: process.platform === 'win32' ? '.\\a.exe' : './a',
     compile: 'gcc',
-    compileArgs: (input, output) =>
-      process.platform === 'win32'
-        ? [`${input}`, `-o`, `${output}.exe`]
-        : [`${input}`, `-o`, output]
-  },
-  'c++': {
-    fileType: 'cpp',
-    exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
-    compile: 'g++',
     compileArgs: (input, output) =>
       process.platform === 'win32'
         ? [`${input}`, `-o`, `${output}.exe`]
@@ -33,7 +24,7 @@ const languages: Record<string, LanguageConfig> = {
   },
   'cpp': {
     fileType: 'cpp',
-    exec: process.platform === 'win32' ? '.\\a.exe' : './a.out',
+    exec: process.platform === 'win32' ? '.\\a.exe' : './a',
     compile: 'g++',
     compileArgs: (input, output) =>
       process.platform === 'win32'
@@ -44,14 +35,48 @@ const languages: Record<string, LanguageConfig> = {
     fileType: 'java',
     exec: 'java',
     compile: 'javac',
+    compileArgs: (input, output) => [input]
   },
   'python': {
     fileType: 'py',
-    exec: 'python'
+    exec: 'python3'
   },
   'javascript': {
     fileType: 'js',
     exec: 'node'
+  },
+  'typescript': {
+    fileType: 'ts',
+    exec: 'node',
+    compile: 'tsc',
+    compileArgs: (input, output) => [input, '--outDir', path.dirname(output)]
+  },
+  'ruby': {
+    fileType: 'rb',
+    exec: 'ruby'
+  },
+  'go': {
+    fileType: 'go',
+    exec: process.platform === 'win32' ? '.\\a.exe' : './a',
+    compile: 'go build',
+    compileArgs: (input, output) => ['-o', output, input]
+  },
+  'php': {
+    fileType: 'php',
+    exec: 'php'
+  },
+  'rust': {
+    fileType: 'rs',
+    exec: process.platform === 'win32' ? '.\\a.exe' : './a',
+    compile: 'rustc',
+    compileArgs: (input, output) =>
+      process.platform === 'win32'
+        ? [`${input}`, `-o`, `${output}.exe`]
+        : [`${input}`, `-o`, output]
+  },
+  'shell': {
+    fileType: 'sh',
+    exec: 'sh'
   }
 };
 
@@ -62,11 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isWindows = process.platform === 'win32';
 
     if (!languages[language]) {
+      console.log('Language not supported:', language);
       return res.status(400).json({ message: 'Language not supported right now.' });
     }
 
     const { fileType, exec, compile, compileArgs } = languages[language];
-    const fileName = `temp.${fileType}`;
+    const className = language === 'java' ? code.match(/public class (\w+)/)[1] : 'temp';
+    const fileName = `${className}.${fileType}`;
     const filePath = path.join(tempDir, fileName);
     const outputPath = path.join(tempDir, 'a');
 
@@ -86,6 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log('Compiling with:', compileCommand);
           await execPromise(compileCommand);
         } catch (compileError) {
+          console.log(compileError);
           return res.status(400).json({
             message: 'Compilation failed',
             error: (compileError instanceof Error ? compileError.toString() : typeof(compileError) === "string" ? compileError : "unknown error")
@@ -94,11 +122,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       let execCommand;
-      if (['c', 'c++', 'cpp'].includes(language)) {
-        const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a.out');
+      if (['c', 'cpp', 'go', 'rust'].includes(language)) {
+        const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a');
         execCommand = `"${exePath}"`;
       } else if (language === 'java') {
-        execCommand = `${exec} -cp "${tempDir}" Main`;
+        execCommand = `${exec} -cp "${tempDir}" ${className}`;
+      } else if (language === 'typescript') {
+        const jsFilePath = filePath.replace(/\.ts$/, '.js');
+        execCommand = `${exec} "${jsFilePath}"`;
       } else {
         execCommand = `${exec} "${filePath}"`;
       }
@@ -107,14 +138,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Cleanup
       await unlink(filePath);
-      if (['c', 'c++', 'cpp'].includes(language)) {
-        const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a.out');
+      if (['c', 'c++', 'go', 'rust'].includes(language)) {
+        const exePath = path.join(tempDir, isWindows ? 'a.exe' : 'a');
         await unlink(exePath).catch(() => {});
       }
 
       if (language === 'java') {
-        await unlink(path.join(tempDir, `Main.class`)); // Remove the .class file
+        await unlink(path.join(tempDir, `${className}.class`)); // Remove the .class file
       }
+
+      if (language === 'typescript') {
+        const jsFilePath = filePath.replace(/\.ts$/, '.js');
+        await unlink(jsFilePath).catch(() => {});
+      }      
 
       return res.status(200).json({
         output: output

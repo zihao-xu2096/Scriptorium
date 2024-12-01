@@ -69,9 +69,8 @@ export default function TemplateDetail() {
         const { success } = await refreshAccessToken();
         if (!success) {
           alert('Log in to save templates');
-          setTimeout(() => {
-            router.push('/login');
-          }, 100);
+          router.push('/login');
+          return
         }
       }
 

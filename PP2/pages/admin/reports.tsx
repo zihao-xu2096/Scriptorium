@@ -28,6 +28,18 @@ interface PostOrComment {
   type: 'post' | 'comment';
 }
 
+const extractTextFromContent = (content: string): string => {
+  try {
+    const parsedContent = JSON.parse(content);
+    return parsedContent
+      .map((block: any) => block.children.map((child: any) => child.text).join(' '))
+      .join(' ');
+  } catch (error) {
+    console.error('Error parsing content:', error);
+    return '';
+  }
+};
+
 export default function RecentPosts() {
   const router = useRouter();
   const [items, setItems] = useState<PostOrComment[]>([]);
@@ -219,16 +231,25 @@ export default function RecentPosts() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedItems.map((item) => (
-                <div key={item.id} className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700 w-full">
-                  <h2 className="text-xl font-bold text-white mb-2">{item.type === 'post' ? 'Post' : 'Comment'}</h2>
-                  <p className="text-gray-400 mb-4">{item.content}</p>
-                  <div className="text-gray-500 mb-2">Reports: {item.reports.length}</div>
-                  <Link href={item.type === 'post' ? `/blogs/${item.id}` : `/comments/${item.id}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block">
-                    View {item.type === 'post' ? 'Post' : 'Comment'}
-                  </Link>
-                </div>
-              ))}
+              {paginatedItems.map((item) => {
+                console.log(item); // Log each item in paginatedItems
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700 w-full cursor-pointer transform transition-transform duration-200 hover:scale-105"
+                    onClick={() => router.push(`/admin/reports/${item.type === 'post' ? 'blog' : 'comment'}/${item.id}`)}
+                  >
+                    <h2 className="text-xl font-bold text-white mb-2">{item.type === 'post' ? 'Post' : 'Comment'}</h2>
+                    <p className="text-gray-400 mb-4">
+                      {item.type === 'post' ? extractTextFromContent(item.content) : item.content}
+                    </p>
+                    <div className="text-gray-500 mb-2">Reports: {item.reports.length}</div>
+                    <Link href={item.type === 'post' ? `/blogs/${item.id}` : `/blogs/${item.postId}`} className="text-indigo-500 hover:text-indigo-400 underline mt-4 block" onClick={(e) => e.stopPropagation()}>
+                      View {item.type === 'post' ? 'Post' : 'Comment'}
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
             <div className="flex justify-center mt-6">
               {currentPage > 1 && (
