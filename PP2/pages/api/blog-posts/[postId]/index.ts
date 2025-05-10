@@ -5,6 +5,7 @@ import { protectedRoute } from "@/middleware/auth";
 import { ApiError, ExtendedRequest, isExtended } from "@/new-types";
 import { Post } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
+import { Descendant } from 'slate';
 
 type GetBlogPostQuery = {
   postId?: string
@@ -19,7 +20,7 @@ type UpdateBlogPostBody = {
 }
 
 
-async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError>) {
+async function handler(req: NextApiRequest, res: NextApiResponse<Post | ApiError>) {
   if (req.method === "GET") { 
     const { postId: id }: GetBlogPostQuery = req.query;
 
@@ -42,6 +43,17 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             { isHidden: false }, 
             isExtended(req) ? { userId: req.user.id } : undefined
           ].filter(value => !!value)} : {}), 
+        }, include: { 
+          tags: {
+            select: {
+              label: true
+            }
+          },
+          linkedTemplates: {
+            select: {
+              id: true
+            }
+          }
         }
       });
 
@@ -67,6 +79,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
   } else if (req.method === "PUT") {
     const { title, description, content, tags, templates }: UpdateBlogPostBody = req.body;
     const { postId: id }: GetBlogPostQuery = req.query;
+    console.log(req.body)
 
     if (!isExtended(req)) {
       res.status(401).json({ message: "No user found" });
@@ -87,9 +100,10 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
 
     if (templates) {
       let allTemplates = await prisma.codeTemplate.findMany();
+      console.log(allTemplates.map(template => template.id))
       
       filteredTemplates = templates.filter((id) => {
-        allTemplates.map(template => template.id).includes(id)
+        return allTemplates.map(template => template.id).includes(id)
       })
     }
 
@@ -169,9 +183,9 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             }
           }
         })
-      }
 
-      res.status(200).json(post);
+    } 
+    res.status(200).json(post);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2016' || error.code === 'P2025') {
@@ -182,6 +196,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       } 
     }
 
+  
   } else if (req.method === "DELETE") {
     const { postId: id }: GetBlogPostQuery = req.query;
 

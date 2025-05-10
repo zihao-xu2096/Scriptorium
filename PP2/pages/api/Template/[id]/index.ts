@@ -1,6 +1,6 @@
-import { prisma } from '@/prisma/prisma';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { protectedRoute } from '../../../../middleware/auth';
+import { prisma } from "@/prisma/prisma";
+import { NextApiRequest, NextApiResponse } from "next";
+import { protectedRoute } from "../../../../middleware/auth";
 
 interface UpdateTemplateBody {
   title: string;
@@ -21,25 +21,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // TODO: Need to check sessionID is the same as template.authorID
 
   if (req.method === "PUT") {
-    const { title, explanation, language, code, tags }: UpdateTemplateBody = req.body;
+    const updates: UpdateTemplateBody = req.body;
 
-    // Validate required fields
-    if (!title || !explanation || !language || !code) {
+    // Validate that at least one field is being updated
+    if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({
-        error: "Missing required fields",
-        details: {
-          title: !title ? "Title is required" : null,
-          explanation: !explanation ? "Explanation is required" : null,
-          language: !language ? "Language is required" : null,
-          code: !code ? "Code is required" : null,
-        },
-      });
-    }
-
-    // Validate tags format if provided
-    if (tags && !Array.isArray(tags)) {
-      return res.status(400).json({
-        error: "Tags must be an array of strings",
+        error: "No update fields provided",
       });
     }
 
@@ -52,28 +39,42 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: "Template not found" });
     }
 
+    // Validate tags format if provided
+    if (updates.tags && !Array.isArray(updates.tags)) {
+      return res.status(400).json({
+        error: "Tags must be an array of strings",
+      });
+    }
+
+    if (!existingTemplate) {
+      return res.status(404).json({ error: "Template not found" });
+    }
+
     try {
       const updatedTemplate = await prisma.codeTemplate.update({
         where: { id: templateId },
         data: {
-          title: title.trim(),
-          explanation: explanation.trim(),
-          language: language.toLowerCase().trim(),
-          code,
+          ...(updates.title && { title: updates.title.trim() }),
+          ...(updates.explanation && {
+            explanation: updates.explanation.trim(),
+          }),
+          ...(updates.language && {
+            language: updates.language.toLowerCase().trim(),
+          }),
+          ...(updates.code && { code: updates.code }),
           updatedAt: new Date(),
-          tags: {
-            // Disconnect all existing tags
-            disconnect: await prisma.templateTag.findMany({
-              where: { codeTemplates: { some: { id: templateId } } },
-              select: { id: true },
-            }),
-            // Connect or create new tags
-            connectOrCreate:
-              tags?.map((tag) => ({
+          ...(updates.tags && {
+            tags: {
+              disconnect: await prisma.templateTag.findMany({
+                where: { codeTemplates: { some: { id: templateId } } },
+                select: { id: true },
+              }),
+              connectOrCreate: updates.tags.map((tag) => ({
                 where: { name: tag.toLowerCase().trim() },
                 create: { name: tag.toLowerCase().trim() },
-              })) || [],
-          },
+              })),
+            },
+          }),
         },
         include: {
           tags: true,
@@ -92,9 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       console.error("Template update error:", error);
       return res.status(500).json({ error: "Update failed" });
     }
-  } 
-  
-  else if (req.method === "DELETE") {
+  } else if (req.method === "DELETE") {
     try {
       await prisma.codeTemplate.delete({
         where: { id: templateId },

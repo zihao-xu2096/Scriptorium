@@ -160,7 +160,7 @@ interface User {
     if (language) params.append('language', language);
     if (tag) params.append('tag', tag);
     
-    const response = await fetch(`/api/Template?${params}`);
+    const response = await fetch(`/api/template?${params}`);
     
     if (!response.ok) {
       const error = await response.json();
@@ -191,7 +191,7 @@ interface User {
    * })
    */
   async function createTemplate(templateData: Template): Promise<Template> {
-    const response = await fetch('/api/Template', {
+    const response = await fetch('/api/template', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(templateData),
@@ -216,7 +216,7 @@ interface User {
    * @returns {Promise<Object>} Updated template data
    */
   async function updateTemplate(id: number, updateData: Template): Promise<Template> {
-    const response = await fetch(`/api/Template/${id}`, {
+    const response = await fetch(`/api/template/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updateData),
@@ -236,7 +236,7 @@ interface User {
    * @returns {Promise<void>}
    */
   async function deleteTemplate(id: number): Promise<void> {
-    const response = await fetch(`/api/Template/${id}`, {
+    const response = await fetch(`/api/template/${id}`, {
       method: 'DELETE',
     });
     
@@ -247,6 +247,7 @@ interface User {
   }
   
   export {
-    createTemplate, createUser, deleteTemplate, deleteUser,
-    getTemplates, getUser, updateTemplate, updateUser
+  createTemplate, createUser, deleteTemplate, deleteUser,
+  getTemplates, getUser, updateTemplate, updateUser
 };
+

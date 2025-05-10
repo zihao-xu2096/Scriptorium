@@ -1,11 +1,13 @@
+import { UserContext } from '@/context/UserContext';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const { login } = useContext(UserContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,8 @@ export default function Login() {
       // Store tokens in local storage or cookies
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      router.push('/profile');
+      login(data);
+      router.push('/');
     } else {
       const errorData = await res.json();
       alert(`Login failed: ${errorData.message}`);

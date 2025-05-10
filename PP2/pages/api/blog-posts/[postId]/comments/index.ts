@@ -5,6 +5,7 @@ import { protectedRoute } from "@/middleware/auth";
 import { ApiError, ExtendedRequest, isExtended } from '@/new-types';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Comment } from '@prisma/client';
+import { comment } from 'postcss';
 
 type BlogPostQuery = {
   postId?: string
@@ -19,10 +20,15 @@ type GetBlogPostsQuery = {
   page?: string | number
   limit?: string | number
   sortBy?: string
+  parentId?: string
 }
 
+type CountedComments = {
+  comments: Comment[]
+  count: number
+}
 
-async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | Comment[] | ApiError>) {
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Comment | CountedComments | ApiError>) {
   if (req.method === "POST") {
     //creating a comment
     const { content, parent }: CreateCommentBody = req.body;
@@ -43,8 +49,8 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       return;
     }
 
-    if (!content) {
-      res.status(400).json({ message: "Title missing" });
+    if (!content.trim()) {
+      res.status(400).json({ message: "Content missing" });
       return;
     }
 
@@ -89,7 +95,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       } 
     }
   } else if (req.method === "GET") {
-    const { postId, page = 1, limit = 10, sortBy }: BlogPostQuery & GetBlogPostsQuery = req.query;
+    const { postId, parentId, page = 1, limit = 10, sortBy }: BlogPostQuery & GetBlogPostsQuery = req.query;
     
     if (!postId) {
       res.status(400).json({ message: "Blog ID not provided" })
@@ -99,6 +105,10 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
     if (!parseInt(postId)) {
       res.status(400).json({ message: "Invalid blog ID type provided" })
       return;
+    }
+
+    if (parentId && !parseInt(parentId)) {
+      res.status(400).json({ message: "Invalid parent ID" })
     }
 
     if (typeof(page) === "string" && !parseInt(page) || typeof(limit) === "string" && !parseInt(limit)) {
@@ -120,11 +130,23 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
           { isHidden: false }, 
           isExtended(req) ? { userId: req.user.id } : undefined
         ].filter(value => !!value)} : {}), 
-        postId: parseInt(postId), 
-        parent: null
+        postId: parseInt(postId),
+        parentId: parentId ? parseInt(parentId) : null
       }, 
       include: {
-        replies: true
+        replies: true,
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            replies: true
+          }
+        }
       },
       orderBy: sortBy === "mostControversial" 
       ? { downvotes: 'desc' } 
@@ -135,7 +157,29 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       take: limitInt
     });
 
-    res.status(200).json(comments);
+    const count = await prisma.comment.count({
+      where: {
+        ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+        {OR: [
+          { isHidden: false }, 
+          isExtended(req) ? { userId: req.user.id } : undefined
+        ].filter(value => !!value)} : {}), 
+        postId: parseInt(postId),
+        parentId: parentId === null ? parentId : parentId ? parseInt(parentId) : undefined
+      }
+    })
+
+    console.log({where: {
+      ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+      {OR: [
+        { isHidden: false }, 
+        isExtended(req) ? { userId: req.user.id } : undefined
+      ].filter(value => !!value)} : {}), 
+      postId: parseInt(postId),
+      parentId: parentId === null ? parentId : parentId ? parseInt(parentId) : undefined
+    }})
+
+    res.status(200).json({ comments, count});
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }

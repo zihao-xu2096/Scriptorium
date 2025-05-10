@@ -23,7 +23,12 @@ type BlogPostsQuery = {
   author?: string
 }
 
-async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError | Post[]>) {
+type CountedPosts = {
+  posts: Post[]
+  count: number
+}
+
+async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiResponse<Post | ApiError | CountedPosts>) {
   if (req.method === "POST") {
     if (!isExtended(req)) {
       res.status(401).json({ message: "No user found" });
@@ -42,7 +47,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         data: {
           title,
           description,
-          content: '',
+          content: '[{"type":"paragraph","align":"center","children":[{"text":""}]}]',
           tags: {
             connectOrCreate: tags?.map((tag) => ({
               where: { label: tag },
@@ -74,6 +79,7 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
         res.status(400).json({ message: `error ${error.code}: ${error.message}` });
         return;
       }
+      throw error
     }
   } else if (req.method === "GET") {
     const { author, title, content, tags, templates, page = 1, limit = 10, sortBy }: BlogPostsQuery = req.query;
@@ -141,6 +147,13 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
             label: true
           }
         },
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        },
+        votes: true,
         _count: true
       },
       orderBy: sortBy === "mostControversial" 
@@ -152,7 +165,39 @@ async function handler(req: ExtendedRequest | NextApiRequest, res: NextApiRespon
       take: limitInt
     });
 
-    res.status(200).json(posts);
+    const count = await prisma.post.count({
+      where : {
+        ...(!isExtended(req) || req.user.userType !== "ADMIN" ?
+        {OR: [
+          { isHidden: false }, 
+          isExtended(req) ? { userId: req.user.id } : undefined
+        ].filter(value => !!value)} : {}), 
+        title: title ? {
+          contains: title
+        } : undefined, 
+        content: content ? {
+          contains: content
+        } : undefined,
+        userId: author ? {
+            equals: parseInt(author)
+        } : undefined,
+        tags: tags ? {
+          some: {
+            label: {
+              in: tagNames
+            }
+          }
+        } : undefined,
+        linkedTemplates: templates ? {
+          some: {
+            id: {
+              in: templateIds
+            }
+          }
+        } : undefined
+    }
+    })
+    res.status(200).json({ posts, count});
   } else {
     res.status(405).json({ message: "Method not allowed" });
   }

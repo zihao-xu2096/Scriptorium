@@ -1,6 +1,7 @@
 import { NavBar } from '@/components/navigation/NavBar';
+import { UserContext } from '@/context/UserContext';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 export default function Profile() {
   interface User {
@@ -24,7 +25,6 @@ export default function Profile() {
     userId: number;
   }
 
-  const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [firstName, setFirstName] = useState('');
@@ -34,6 +34,9 @@ export default function Profile() {
   const [authorized, setAuthorized] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 4;
+
+
+  const { user, login } = useContext(UserContext);
   useEffect(() => {
     const fetchUser = async () => {
       const accessToken = localStorage.getItem('accessToken');
@@ -58,7 +61,6 @@ export default function Profile() {
         })
 
         if (refreshRes.status !== 200) {
-          console.log('Access token refreshed');
           setAuthorized(false);
           return;
         }
@@ -67,7 +69,7 @@ export default function Profile() {
         localStorage.setItem('accessToken', refreshedAccessToken.accessToken);
       }
       const data = await res.json();
-      setUser(data);
+      login(data);
       setFirstName(data.firstName);
       setLastName(data.lastName);
       setPhoneNum(data.phoneNum);
@@ -108,7 +110,7 @@ export default function Profile() {
       const data = await res.json()
       const authorID = data.authorID;
       console.log(authorID)
-      const resPosts = await fetch(`/api/blog-posts/?author=${authorID}`, {
+      const resPosts = await fetch(`/api/blog-posts/?author=${authorID}&limit=${postsPerPage}&page=${currentPage}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -116,12 +118,12 @@ export default function Profile() {
       })
       const postData = await resPosts.json();
       console.log(postData)
-      setPosts(postData);
+      setPosts(postData.posts);
     };
 
     fetchUser();
     fetchUserPosts();
-  }, []);
+  }, [currentPage]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +166,7 @@ export default function Profile() {
     }
     
     const updatedUser = await res.json();
-    setUser(updatedUser.user);
+    login(updatedUser.user);
     setEditMode(false);
   };
 
@@ -179,7 +181,7 @@ export default function Profile() {
   const totalPages = Math.ceil(posts.length / postsPerPage);
 
 
-  if (!authorized) {
+  if (!authorized || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
@@ -193,12 +195,14 @@ export default function Profile() {
   }
 
   if (!user) {
-    return <div>Loading... Please refresh the page if this persists for longer than 10 seconds as the profile could not be loaded properly.</div>;
+    return <div>Loading... </div>;
   }
 
   return (
+    !user ? <div>Loading... </div> :
+    <>
+      <NavBar />
       <div className="flex flex-col items-center bg-gray-900 min-h-screen">
-        <NavBar />
         <div className="flex flex-row items-center bg-gray-900 min-h-screen">
 
           <div className="w-[600px] mx-10 p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
@@ -300,7 +304,7 @@ export default function Profile() {
               {currentPosts.map((post) => (
                 <div key={post.id} className="p-4 bg-gray-700 rounded-md shadow-md">
                   <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <Link href={`/blog-posts/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
+                  <Link href={`/blogs/${post.id}`} className="text-indigo-500 hover:text-indigo-400 underline">
                     Read more
                   </Link>
                 </div>
@@ -325,5 +329,6 @@ export default function Profile() {
         </div>
     </div>
     
+  </>
   );
 }
